@@ -148,6 +148,19 @@ export const saveStatusAtom = atom<SaveStatus>("idle");
 export const lastSavedAtom = atom<Date | null>(null);
 
 /**
+ * Edit mode atoms (for editing existing FinalSpaces)
+ */
+
+// Flag to indicate we're in edit mode (vs wizard creation)
+export const editModeAtom = atom<boolean>(false);
+
+// Track published status of entry being edited
+export const isPublishedAtom = atom<boolean>(false);
+
+// Snapshot of initial data for change detection (set once when loading)
+export const initialDataSnapshotAtom = atom<string | null>(null);
+
+/**
  * Step definitions
  */
 export const WIZARD_STEPS = [

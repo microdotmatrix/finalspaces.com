@@ -8,6 +8,9 @@ import { db } from "@/lib/db";
 import { finalSpaceCollaborators, finalSpaces } from "@/lib/db/schema";
 import { createUniqueSlug } from "@/lib/utils/slug";
 
+// Re-export types from schema for convenience
+export type { FinalSpace } from "@/lib/db/schema";
+
 // Types
 export type CreateFinalSpaceInput = {
   name: string;

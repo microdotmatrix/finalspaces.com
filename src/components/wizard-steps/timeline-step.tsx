@@ -48,17 +48,15 @@ export function TimelineStep() {
         </div>
       </div>
 
-      <div className="rounded-lg bg-blue-50 p-4 text-sm dark:bg-blue-950/30">
+      <div className="rounded-lg bg-muted p-4 text-sm">
         <div className="flex gap-3">
           <Icon
-            className="size-5 flex-shrink-0 text-blue-500"
+            className="size-5 flex-shrink-0 text-muted-foreground"
             icon="mdi:information-outline"
           />
           <div>
-            <p className="font-medium text-blue-700 dark:text-blue-400">
-              Skip for now
-            </p>
-            <p className="text-blue-600 dark:text-blue-300">
+            <p className="font-medium text-foreground">Skip for now</p>
+            <p className="text-muted-foreground">
               Timeline events can be added after publishing. Continue to the
               next step.
             </p>

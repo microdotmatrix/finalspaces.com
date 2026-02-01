@@ -1,6 +1,7 @@
 "use client";
 
 import { useAtom } from "jotai";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback } from "react";
@@ -106,11 +107,24 @@ function WizardContent() {
 
       {/* Main Content */}
       <main className="container mx-auto max-w-2xl px-4 py-8">
-        {isReviewStep ? (
-          <ReviewStep onNavigateToStep={navigateToStep} />
-        ) : (
-          <StepComponent />
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: 20 }}
+            key={currentStep.key}
+            transition={{
+              duration: 0.3,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            {isReviewStep ? (
+              <ReviewStep onNavigateToStep={navigateToStep} />
+            ) : (
+              <StepComponent />
+            )}
+          </motion.div>
+        </AnimatePresence>
         <WizardNavigation
           canGoNext={validStepIndex < WIZARD_STEPS.length - 1}
           canGoPrev={validStepIndex > 0}

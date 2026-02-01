@@ -13,6 +13,11 @@ interface AlbumsGridProps {
   slug: string;
 }
 
+// Convert storage key to full UploadThing URL
+function getMediaUrl(storageKey: string): string {
+  return `https://utfs.io/f/${storageKey}`;
+}
+
 export function AlbumsGrid({ albums, slug }: AlbumsGridProps) {
   if (albums.length === 0) {
     return null;
@@ -35,7 +40,7 @@ export function AlbumsGrid({ albums, slug }: AlbumsGridProps) {
                   className="object-cover transition-transform group-hover:scale-105"
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  src={album.coverImageUrl}
+                  src={getMediaUrl(album.coverImageUrl)}
                 />
               ) : (
                 <div className="flex size-full items-center justify-center text-4xl text-muted-foreground">

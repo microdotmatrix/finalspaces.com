@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "utfs.io",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "i.scdn.co",
         pathname: "/image/*",
       },

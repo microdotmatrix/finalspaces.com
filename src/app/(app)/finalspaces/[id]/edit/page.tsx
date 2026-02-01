@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState, useTransition } from "react";
 
 import { EditTabs } from "@/components/edit/edit-tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { SaveStatusIndicator } from "@/components/wizard/save-status-indicator";
@@ -196,15 +197,14 @@ function EditPageContent({ spaceId }: { spaceId: string }) {
       {/* Unpublished Notice */}
       {finalSpace.status === "published" && !isPublished && (
         <div className="container mx-auto max-w-4xl px-4 pt-4">
-          <div className="rounded-lg border border-yellow-500/50 bg-yellow-50 p-3 dark:bg-yellow-950/30">
-            <div className="flex items-center gap-2">
-              <Icon className="size-4 text-yellow-600" icon="mdi:information" />
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                This FinalSpace has been unpublished while you make edits. Click
-                &quot;Publish&quot; when ready to make it public again.
-              </p>
-            </div>
-          </div>
+          <Alert>
+            <Icon className="size-4" icon="mdi:information" />
+            <AlertTitle>Space Unpublished</AlertTitle>
+            <AlertDescription>
+              This FinalSpace has been unpublished while you make edits. Click
+              &quot;Publish&quot; when ready to make it public again.
+            </AlertDescription>
+          </Alert>
         </div>
       )}
 

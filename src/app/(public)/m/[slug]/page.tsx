@@ -101,19 +101,31 @@ export default async function MemorialPage({ params }: Props) {
   return (
     <main className="min-h-screen">
       {/* Header Carousel */}
-      {headerImages.length > 0 && <HeaderCarousel images={headerImages} />}
-
-      <MemorialHero
-        birthDate={space.birthDate}
-        deathDate={space.deathDate}
-        displayName={displayName}
-        fullName={fullName}
-        inMemoriam={space.inMemoriam}
-        name={space.name}
-        nickname={space.nickname}
-        profilePicture={profilePicture}
-        useNicknameOnly={space.useNicknameOnly}
-      />
+      {headerImages.length > 0 ? (
+        <HeaderCarousel
+          birthDate={space.birthDate}
+          deathDate={space.deathDate}
+          displayName={displayName}
+          fullName={fullName}
+          images={headerImages}
+          inMemoriam={space.inMemoriam}
+          nickname={space.nickname}
+          profilePicture={profilePicture}
+          useNicknameOnly={space.useNicknameOnly}
+        />
+      ) : (
+        <MemorialHero
+          birthDate={space.birthDate}
+          deathDate={space.deathDate}
+          displayName={displayName}
+          fullName={fullName}
+          inMemoriam={space.inMemoriam}
+          name={space.name}
+          nickname={space.nickname}
+          profilePicture={profilePicture}
+          useNicknameOnly={space.useNicknameOnly}
+        />
+      )}
 
       <MemorialBio bioText={space.bioText} />
       <MemorialHighlights lifeHighlights={space.lifeHighlights} />
@@ -208,10 +220,14 @@ function MemorialHero({
   profilePicture,
   useNicknameOnly,
 }: MemorialHeroProps) {
+  // Convert storage key to full UploadThing URL
+  const profilePictureUrl = profilePicture
+    ? `https://utfs.io/f/${profilePicture}`
+    : null;
   return (
     <section className="relative bg-linear-to-b from-primary/10 to-background py-16 sm:py-24">
       <div className="container mx-auto px-4 text-center">
-        {profilePicture ? (
+        {profilePictureUrl ? (
           <div className="relative mx-auto mb-6 size-32 overflow-hidden rounded-full sm:size-40">
             <Image
               alt={displayName || name}
@@ -219,7 +235,7 @@ function MemorialHero({
               fill
               priority
               sizes="160px"
-              src={profilePicture}
+              src={profilePictureUrl}
             />
           </div>
         ) : (

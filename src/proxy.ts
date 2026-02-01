@@ -5,6 +5,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)",
+  "/api/uploadthing(.*)",
   // Public memorial pages (by slug)
   "/m/(.*)",
 ]);

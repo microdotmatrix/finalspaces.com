@@ -90,6 +90,40 @@ export const familyMemberCategoryEnum = pgEnum("family_member_category", [
   "pet",
 ]);
 
+export const relationshipTypeEnum = pgEnum("relationship_type", [
+  // Direct ancestors
+  "parent",
+  "grandparent",
+  "great_grandparent",
+  // Direct descendants
+  "child",
+  "grandchild",
+  "great_grandchild",
+  // Siblings
+  "sibling",
+  "half_sibling",
+  "step_sibling",
+  // Extended lateral
+  "cousin",
+  "aunt_uncle",
+  "niece_nephew",
+  // Spouse relationships
+  "spouse",
+  "ex_spouse",
+  "partner",
+  // In-laws
+  "parent_in_law",
+  "sibling_in_law",
+  "child_in_law",
+  // Step relationships
+  "step_parent",
+  "step_child",
+  // Other
+  "godparent",
+  "godchild",
+  "other",
+]);
+
 // Users table for authentication
 export const users = pgTable(
   "users",
@@ -497,10 +531,13 @@ export const familyMembers = pgTable(
       .notNull()
       .references(() => finalSpaces.id, { onDelete: "cascade" }),
     category: familyMemberCategoryEnum("category").notNull(),
+    relationshipType: relationshipTypeEnum("relationship_type"),
     firstName: text("first_name").notNull(),
     lastName: text("last_name"),
     nickname: text("nickname"),
     relationship: text("relationship").notNull(),
+    birthYear: integer("birth_year"),
+    deathYear: integer("death_year"),
     photoUrl: text("photo_url"),
     photoStorageKey: text("photo_storage_key"),
     linkedFinalSpaceId: uuid("linked_final_space_id").references(
@@ -516,6 +553,7 @@ export const familyMembers = pgTable(
   (table) => [
     index("family_members_final_space_id_idx").on(table.finalSpaceId),
     index("family_members_category_idx").on(table.category),
+    index("family_members_relationship_type_idx").on(table.relationshipType),
     index("family_members_linked_final_space_idx").on(table.linkedFinalSpaceId),
   ]
 );
@@ -1474,13 +1512,42 @@ export const registerSchema = z.object({
   displayName: z.string().max(100).optional(),
 });
 
+export const relationshipTypeValues = [
+  "parent",
+  "grandparent",
+  "great_grandparent",
+  "child",
+  "grandchild",
+  "great_grandchild",
+  "sibling",
+  "half_sibling",
+  "step_sibling",
+  "cousin",
+  "aunt_uncle",
+  "niece_nephew",
+  "spouse",
+  "ex_spouse",
+  "partner",
+  "parent_in_law",
+  "sibling_in_law",
+  "child_in_law",
+  "step_parent",
+  "step_child",
+  "godparent",
+  "godchild",
+  "other",
+] as const;
+
 export const insertFamilyMemberSchema = createInsertSchema(familyMembers)
   .pick({
     category: true,
+    relationshipType: true,
     firstName: true,
     lastName: true,
     nickname: true,
     relationship: true,
+    birthYear: true,
+    deathYear: true,
     photoUrl: true,
     photoStorageKey: true,
     linkedFinalSpaceId: true,
@@ -1490,10 +1557,13 @@ export const insertFamilyMemberSchema = createInsertSchema(familyMembers)
   })
   .extend({
     category: z.enum(["ancestor", "lateral", "spouse", "descendant", "pet"]),
+    relationshipType: z.enum(relationshipTypeValues).optional(),
     firstName: z.string().min(1).max(100),
     lastName: z.string().max(100).optional(),
     nickname: z.string().max(100).optional(),
     relationship: z.string().min(1).max(100),
+    birthYear: z.number().int().min(1800).max(2100).optional(),
+    deathYear: z.number().int().min(1800).max(2100).optional(),
     photoUrl: z.string().url().optional().or(z.literal("")),
     photoStorageKey: z.string().optional(),
     linkedFinalSpaceId: z.string().uuid().optional(),

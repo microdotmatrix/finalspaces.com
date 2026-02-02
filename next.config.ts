@@ -24,6 +24,46 @@ const nextConfig: NextConfig = {
         hostname: "i.ytimg.com",
         pathname: "/vi/*",
       },
+      {
+        protocol: "https",
+        hostname: "open.spotify.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.spotify.com",
+        pathname: "/v1/*",
+      },
+      {
+        protocol: "https",
+        hostname: "covers.openlibrary.org",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "image.tmdb.org",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "media.rawg.io",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.myanimelist.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.themealdb.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.artic.edu",
+        pathname: "/**",
+      },
     ],
   },
 };

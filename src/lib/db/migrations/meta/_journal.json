@@ -15,6 +15,13 @@
       "when": 1769720974592,
       "tag": "0001_silky_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770046763400,
+      "tag": "0002_flat_bill_hollister",
+      "breakpoints": true
     }
   ]
 }

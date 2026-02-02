@@ -9,6 +9,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlbumsStep } from "@/components/wizard-steps/albums-step";
 import { BioStep } from "@/components/wizard-steps/bio-step";
 import { DatesStep } from "@/components/wizard-steps/dates-step";
+import { FamilyStep } from "@/components/wizard-steps/family-step";
+import { FavoritesStep } from "@/components/wizard-steps/favorites-step";
 import { IdentityStep } from "@/components/wizard-steps/identity-step";
 import { LocationsStep } from "@/components/wizard-steps/locations-step";
 import { PhotosStep } from "@/components/wizard-steps/photos-step";
@@ -39,6 +41,18 @@ const EDIT_TABS = [
     label: "Timeline",
     icon: "mdi:timeline-clock-outline",
     description: "Life events and milestones",
+  },
+  {
+    key: "family",
+    label: "Family",
+    icon: "ph:tree-structure-duotone",
+    description: "Family tree and relationships",
+  },
+  {
+    key: "favorites",
+    label: "Favorites",
+    icon: "ph:star-duotone",
+    description: "Books, movies, music, and more",
   },
 ] as const;
 
@@ -114,6 +128,22 @@ function TimelineContent() {
   );
 }
 
+function FamilyContent() {
+  return (
+    <Suspense fallback={<TabSkeleton />}>
+      <FamilyStep />
+    </Suspense>
+  );
+}
+
+function FavoritesContent() {
+  return (
+    <Suspense fallback={<TabSkeleton />}>
+      <FavoritesStep />
+    </Suspense>
+  );
+}
+
 function EditTabsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -152,6 +182,8 @@ function EditTabsContent() {
           {currentTab === "media" && <MediaContent />}
           {currentTab === "social" && <SocialContent />}
           {currentTab === "timeline" && <TimelineContent />}
+          {currentTab === "family" && <FamilyContent />}
+          {currentTab === "favorites" && <FavoritesContent />}
         </motion.div>
       </AnimatePresence>
     </Tabs>

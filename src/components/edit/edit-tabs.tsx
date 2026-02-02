@@ -1,10 +1,11 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { Icon } from "@/components/ui/icon";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlbumsStep } from "@/components/wizard-steps/albums-step";
 import { BioStep } from "@/components/wizard-steps/bio-step";
 import { DatesStep } from "@/components/wizard-steps/dates-step";
@@ -41,6 +42,8 @@ const EDIT_TABS = [
   },
 ] as const;
 
+type TabKey = (typeof EDIT_TABS)[number]["key"];
+
 function TabSkeleton() {
   return (
     <div className="flex animate-pulse flex-col gap-6">
@@ -59,10 +62,62 @@ function SectionDivider() {
   return <div className="border-t pt-8" />;
 }
 
+function BasicInfoContent() {
+  return (
+    <div className="space-y-8">
+      <Suspense fallback={<TabSkeleton />}>
+        <IdentityStep />
+      </Suspense>
+      <SectionDivider />
+      <Suspense fallback={<TabSkeleton />}>
+        <DatesStep />
+      </Suspense>
+      <SectionDivider />
+      <Suspense fallback={<TabSkeleton />}>
+        <LocationsStep />
+      </Suspense>
+      <SectionDivider />
+      <Suspense fallback={<TabSkeleton />}>
+        <BioStep />
+      </Suspense>
+    </div>
+  );
+}
+
+function MediaContent() {
+  return (
+    <div className="space-y-8">
+      <Suspense fallback={<TabSkeleton />}>
+        <PhotosStep />
+      </Suspense>
+      <SectionDivider />
+      <Suspense fallback={<TabSkeleton />}>
+        <AlbumsStep />
+      </Suspense>
+    </div>
+  );
+}
+
+function SocialContent() {
+  return (
+    <Suspense fallback={<TabSkeleton />}>
+      <SocialStep />
+    </Suspense>
+  );
+}
+
+function TimelineContent() {
+  return (
+    <Suspense fallback={<TabSkeleton />}>
+      <TimelineStep />
+    </Suspense>
+  );
+}
+
 function EditTabsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentTab = searchParams.get("tab") || "basic";
+  const currentTab = (searchParams.get("tab") || "basic") as TabKey;
 
   const handleTabChange = (value: string | number | null) => {
     if (value && typeof value === "string") {
@@ -82,53 +137,23 @@ function EditTabsContent() {
         ))}
       </TabsList>
 
-      {/* Basic Info Tab */}
-      <TabsContent value="basic">
-        <div className="space-y-8">
-          <Suspense fallback={<TabSkeleton />}>
-            <IdentityStep />
-          </Suspense>
-          <SectionDivider />
-          <Suspense fallback={<TabSkeleton />}>
-            <DatesStep />
-          </Suspense>
-          <SectionDivider />
-          <Suspense fallback={<TabSkeleton />}>
-            <LocationsStep />
-          </Suspense>
-          <SectionDivider />
-          <Suspense fallback={<TabSkeleton />}>
-            <BioStep />
-          </Suspense>
-        </div>
-      </TabsContent>
-
-      {/* Media Tab */}
-      <TabsContent value="media">
-        <div className="space-y-8">
-          <Suspense fallback={<TabSkeleton />}>
-            <PhotosStep />
-          </Suspense>
-          <SectionDivider />
-          <Suspense fallback={<TabSkeleton />}>
-            <AlbumsStep />
-          </Suspense>
-        </div>
-      </TabsContent>
-
-      {/* Social Tab */}
-      <TabsContent value="social">
-        <Suspense fallback={<TabSkeleton />}>
-          <SocialStep />
-        </Suspense>
-      </TabsContent>
-
-      {/* Timeline Tab */}
-      <TabsContent value="timeline">
-        <Suspense fallback={<TabSkeleton />}>
-          <TimelineStep />
-        </Suspense>
-      </TabsContent>
+      <AnimatePresence mode="wait">
+        <motion.div
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: 20 }}
+          key={currentTab}
+          transition={{
+            duration: 0.3,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        >
+          {currentTab === "basic" && <BasicInfoContent />}
+          {currentTab === "media" && <MediaContent />}
+          {currentTab === "social" && <SocialContent />}
+          {currentTab === "timeline" && <TimelineContent />}
+        </motion.div>
+      </AnimatePresence>
     </Tabs>
   );
 }

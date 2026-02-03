@@ -32,6 +32,7 @@ import type {
 } from "@/lib/actions/family-actions";
 import { searchFinalSpacesForLinking } from "@/lib/actions/family-actions";
 import {
+  getCategoryFromRelationshipType,
   getGenerationLevel,
   RELATIONSHIP_GROUPS,
   type RelationshipType,
@@ -47,6 +48,345 @@ interface FamilyMemberFormProps {
   onSubmit: (
     data: Omit<CreateFamilyMemberInput, "finalSpaceId">
   ) => void | Promise<void>;
+}
+
+type LinkMode = "none" | "search" | "manual";
+
+interface RelationshipTypeSelectProps {
+  value: RelationshipType | "";
+  onChange: (value: RelationshipType) => void;
+}
+
+function RelationshipTypeSelect({
+  value,
+  onChange,
+}: RelationshipTypeSelectProps) {
+  return (
+    <div className="space-y-2">
+      <Label>Relationship Type *</Label>
+      <Select
+        onValueChange={(nextValue) => onChange(nextValue as RelationshipType)}
+        value={value}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select relationship type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Ancestors</SelectLabel>
+            {RELATIONSHIP_GROUPS.ancestor.map((r) => (
+              <SelectItem key={r.type} value={r.type}>
+                {r.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+          <SelectGroup>
+            <SelectLabel>Descendants</SelectLabel>
+            {RELATIONSHIP_GROUPS.descendant.map((r) => (
+              <SelectItem key={r.type} value={r.type}>
+                {r.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+          <SelectGroup>
+            <SelectLabel>Siblings & Extended</SelectLabel>
+            {RELATIONSHIP_GROUPS.lateral.map((r) => (
+              <SelectItem key={r.type} value={r.type}>
+                {r.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+          <SelectGroup>
+            <SelectLabel>Spouse & In-Laws</SelectLabel>
+            {RELATIONSHIP_GROUPS.spouse.map((r) => (
+              <SelectItem key={r.type} value={r.type}>
+                {r.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+interface SpecificRelationshipInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  suggestions: string[];
+}
+
+function SpecificRelationshipInput({
+  value,
+  onChange,
+  suggestions,
+}: SpecificRelationshipInputProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="relationship">Specific Relationship *</Label>
+      <Input
+        id="relationship"
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="e.g., Mother, Uncle Bob"
+        value={value}
+      />
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {suggestions.map((suggestion) => (
+            <button
+              className="rounded-full bg-muted px-2 py-0.5 text-xs transition-colors hover:bg-muted-foreground/20"
+              key={suggestion}
+              onClick={() => onChange(suggestion)}
+              type="button"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface NameFieldsProps {
+  firstName: string;
+  lastName: string;
+  nickname: string;
+  onFirstNameChange: (value: string) => void;
+  onLastNameChange: (value: string) => void;
+  onNicknameChange: (value: string) => void;
+}
+
+function NameFields({
+  firstName,
+  lastName,
+  nickname,
+  onFirstNameChange,
+  onLastNameChange,
+  onNicknameChange,
+}: NameFieldsProps) {
+  return (
+    <>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">First Name *</Label>
+          <Input
+            id="firstName"
+            onChange={(e) => onFirstNameChange(e.target.value)}
+            placeholder="John"
+            value={firstName}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Last Name</Label>
+          <Input
+            id="lastName"
+            onChange={(e) => onLastNameChange(e.target.value)}
+            placeholder="Smith"
+            value={lastName}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="nickname">Nickname</Label>
+        <Input
+          id="nickname"
+          onChange={(e) => onNicknameChange(e.target.value)}
+          placeholder="Johnny"
+          value={nickname}
+        />
+      </div>
+    </>
+  );
+}
+
+interface YearFieldsProps {
+  birthYear: string;
+  deathYear: string;
+  onBirthYearChange: (value: string) => void;
+  onDeathYearChange: (value: string) => void;
+}
+
+function YearFields({
+  birthYear,
+  deathYear,
+  onBirthYearChange,
+  onDeathYearChange,
+}: YearFieldsProps) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-2">
+        <Label htmlFor="birthYear">Birth Year</Label>
+        <Input
+          id="birthYear"
+          max={2100}
+          min={1800}
+          onChange={(e) => onBirthYearChange(e.target.value)}
+          placeholder="1950"
+          type="number"
+          value={birthYear}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="deathYear">Death Year</Label>
+        <Input
+          id="deathYear"
+          max={2100}
+          min={1800}
+          onChange={(e) => onDeathYearChange(e.target.value)}
+          placeholder="Leave empty if living"
+          type="number"
+          value={deathYear}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface PhotoUrlFieldProps {
+  photoUrl: string;
+  onPhotoUrlChange: (value: string) => void;
+}
+
+function PhotoUrlField({ photoUrl, onPhotoUrlChange }: PhotoUrlFieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="photoUrl">Photo URL</Label>
+      <Input
+        id="photoUrl"
+        onChange={(e) => onPhotoUrlChange(e.target.value)}
+        placeholder="https://example.com/photo.jpg"
+        type="url"
+        value={photoUrl}
+      />
+      {photoUrl && (
+        <div className="relative mt-2 size-16 overflow-hidden rounded-lg">
+          <Image
+            alt="Preview"
+            className="object-cover"
+            fill
+            sizes="64px"
+            src={photoUrl}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface FinalSpaceLinkSectionProps {
+  linkMode: LinkMode;
+  onLinkModeChange: (mode: LinkMode) => void;
+  searchQuery: string;
+  onSearchQueryChange: (value: string) => void;
+  searchResults: LinkedFinalSpace[];
+  selectedFinalSpace: LinkedFinalSpace | null;
+  onSelectFinalSpace: (space: LinkedFinalSpace | null) => void;
+  isSearching: boolean;
+}
+
+function FinalSpaceLinkSection({
+  linkMode,
+  onLinkModeChange,
+  searchQuery,
+  onSearchQueryChange,
+  searchResults,
+  selectedFinalSpace,
+  onSelectFinalSpace,
+  isSearching,
+}: FinalSpaceLinkSectionProps) {
+  return (
+    <div className="space-y-2">
+      <Label>Link to FinalSpace</Label>
+      <div className="flex gap-2">
+        <Button
+          onClick={() => onLinkModeChange("none")}
+          size="sm"
+          type="button"
+          variant={linkMode === "none" ? "default" : "outline"}
+        >
+          None
+        </Button>
+        <Button
+          onClick={() => onLinkModeChange("search")}
+          size="sm"
+          type="button"
+          variant={linkMode === "search" ? "default" : "outline"}
+        >
+          Search
+        </Button>
+      </div>
+
+      {linkMode === "search" && (
+        <div className="mt-2 space-y-2">
+          <Input
+            onChange={(e) => onSearchQueryChange(e.target.value)}
+            placeholder="Search by name..."
+            value={searchQuery}
+          />
+          {isSearching && (
+            <p className="text-muted-foreground text-sm">Searching...</p>
+          )}
+          {searchResults.length > 0 && (
+            <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
+              {searchResults.map((result) => (
+                <button
+                  className={`flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-accent ${
+                    selectedFinalSpace?.id === result.id ? "bg-accent" : ""
+                  }`}
+                  key={result.id}
+                  onClick={() => onSelectFinalSpace(result)}
+                  type="button"
+                >
+                  {result.profilePictureUrl ? (
+                    <Image
+                      alt={result.name}
+                      className="size-8 rounded-full object-cover"
+                      height={32}
+                      src={result.profilePictureUrl}
+                      width={32}
+                    />
+                  ) : (
+                    <div className="flex size-8 items-center justify-center rounded-full bg-muted">
+                      <Icon
+                        className="size-4 text-muted-foreground"
+                        icon="ph:user"
+                      />
+                    </div>
+                  )}
+                  <span className="text-sm">{result.name}</span>
+                  {selectedFinalSpace?.id === result.id && (
+                    <Icon
+                      className="ml-auto size-4 text-primary"
+                      icon="ph:check"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+          {selectedFinalSpace && (
+            <div className="flex items-center gap-2 rounded-md bg-primary/10 p-2">
+              <Icon className="size-4 text-primary" icon="ph:link-simple" />
+              <span className="text-sm">
+                Linked to: {selectedFinalSpace.name}
+              </span>
+              <Button
+                className="ml-auto"
+                onClick={() => onSelectFinalSpace(null)}
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              >
+                <Icon className="size-3" icon="ph:x" />
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function FamilyMemberForm({
@@ -77,7 +417,7 @@ export function FamilyMemberForm({
   const [photoUrl, setPhotoUrl] = useState(member?.photoUrl ?? "");
 
   // FinalSpace linking
-  const [linkMode, setLinkMode] = useState<"none" | "search" | "manual">(
+  const [linkMode, setLinkMode] = useState<LinkMode>(
     member?.linkedFinalSpaceId ? "search" : "none"
   );
   const [searchQuery, setSearchQuery] = useState("");
@@ -108,20 +448,36 @@ export function FamilyMemberForm({
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
 
+    let isCancelled = false;
     const timeout = setTimeout(async () => {
       setIsSearching(true);
-      const results = await searchFinalSpacesForLinking(
-        searchQuery,
-        currentUserId
-      );
-      setSearchResults(results.filter((r) => r.id !== finalSpaceId));
-      setIsSearching(false);
+      try {
+        const results = await searchFinalSpacesForLinking(
+          searchQuery,
+          currentUserId
+        );
+        if (!isCancelled) {
+          setSearchResults(results.filter((r) => r.id !== finalSpaceId));
+        }
+      } catch {
+        if (!isCancelled) {
+          setSearchResults([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsSearching(false);
+        }
+      }
     }, 300);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeout);
+    };
   }, [searchQuery, currentUserId, finalSpaceId]);
 
   // Get specific relationship suggestions based on type
@@ -137,28 +493,9 @@ export function FamilyMemberForm({
       return;
     }
 
-    const getCategoryFromType = ():
-      | "ancestor"
-      | "lateral"
-      | "spouse"
-      | "descendant" => {
-      if (
-        RELATIONSHIP_GROUPS.ancestor.find((r) => r.type === relationshipType)
-      ) {
-        return "ancestor";
-      }
-      if (
-        RELATIONSHIP_GROUPS.descendant.find((r) => r.type === relationshipType)
-      ) {
-        return "descendant";
-      }
-      if (RELATIONSHIP_GROUPS.spouse.find((r) => r.type === relationshipType)) {
-        return "spouse";
-      }
-      return "lateral";
-    };
-
-    const category = getCategoryFromType();
+    const category = relationshipType
+      ? getCategoryFromRelationshipType(relationshipType)
+      : "lateral";
 
     startTransition(async () => {
       await onSubmit({
@@ -195,258 +532,45 @@ export function FamilyMemberForm({
         </DialogHeader>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Relationship Type */}
-          <div className="space-y-2">
-            <Label>Relationship Type *</Label>
-            <Select
-              onValueChange={(value) =>
-                setRelationshipType(value as RelationshipType)
-              }
-              value={relationshipType}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select relationship type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Ancestors</SelectLabel>
-                  {RELATIONSHIP_GROUPS.ancestor.map((r) => (
-                    <SelectItem key={r.type} value={r.type}>
-                      {r.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>Descendants</SelectLabel>
-                  {RELATIONSHIP_GROUPS.descendant.map((r) => (
-                    <SelectItem key={r.type} value={r.type}>
-                      {r.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>Siblings & Extended</SelectLabel>
-                  {RELATIONSHIP_GROUPS.lateral.map((r) => (
-                    <SelectItem key={r.type} value={r.type}>
-                      {r.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>Spouse & In-Laws</SelectLabel>
-                  {RELATIONSHIP_GROUPS.spouse.map((r) => (
-                    <SelectItem key={r.type} value={r.type}>
-                      {r.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+          <RelationshipTypeSelect
+            onChange={setRelationshipType}
+            value={relationshipType}
+          />
 
-          {/* Specific Relationship */}
-          <div className="space-y-2">
-            <Label htmlFor="relationship">Specific Relationship *</Label>
-            <Input
-              id="relationship"
-              onChange={(e) => setRelationship(e.target.value)}
-              placeholder="e.g., Mother, Uncle Bob"
-              value={relationship}
-            />
-            {relationshipSuggestions.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {relationshipSuggestions.map((suggestion) => (
-                  <button
-                    className="rounded-full bg-muted px-2 py-0.5 text-xs transition-colors hover:bg-muted-foreground/20"
-                    key={suggestion}
-                    onClick={() => setRelationship(suggestion)}
-                    type="button"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <SpecificRelationshipInput
+            onChange={setRelationship}
+            suggestions={relationshipSuggestions}
+            value={relationship}
+          />
 
-          {/* Name Fields */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
-              <Input
-                id="firstName"
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="John"
-                value={firstName}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Smith"
-                value={lastName}
-              />
-            </div>
-          </div>
+          <NameFields
+            firstName={firstName}
+            lastName={lastName}
+            nickname={nickname}
+            onFirstNameChange={setFirstName}
+            onLastNameChange={setLastName}
+            onNicknameChange={setNickname}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="nickname">Nickname</Label>
-            <Input
-              id="nickname"
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Johnny"
-              value={nickname}
-            />
-          </div>
+          <YearFields
+            birthYear={birthYear}
+            deathYear={deathYear}
+            onBirthYearChange={setBirthYear}
+            onDeathYearChange={setDeathYear}
+          />
 
-          {/* Years */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="birthYear">Birth Year</Label>
-              <Input
-                id="birthYear"
-                max={2100}
-                min={1800}
-                onChange={(e) => setBirthYear(e.target.value)}
-                placeholder="1950"
-                type="number"
-                value={birthYear}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="deathYear">Death Year</Label>
-              <Input
-                id="deathYear"
-                max={2100}
-                min={1800}
-                onChange={(e) => setDeathYear(e.target.value)}
-                placeholder="Leave empty if living"
-                type="number"
-                value={deathYear}
-              />
-            </div>
-          </div>
+          <PhotoUrlField onPhotoUrlChange={setPhotoUrl} photoUrl={photoUrl} />
 
-          {/* Photo URL */}
-          <div className="space-y-2">
-            <Label htmlFor="photoUrl">Photo URL</Label>
-            <Input
-              id="photoUrl"
-              onChange={(e) => setPhotoUrl(e.target.value)}
-              placeholder="https://example.com/photo.jpg"
-              type="url"
-              value={photoUrl}
-            />
-            {photoUrl && (
-              <div className="relative mt-2 size-16 overflow-hidden rounded-lg">
-                <Image
-                  alt="Preview"
-                  className="object-cover"
-                  fill
-                  sizes="64px"
-                  src={photoUrl}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Link to FinalSpace */}
-          <div className="space-y-2">
-            <Label>Link to FinalSpace</Label>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setLinkMode("none")}
-                size="sm"
-                type="button"
-                variant={linkMode === "none" ? "default" : "outline"}
-              >
-                None
-              </Button>
-              <Button
-                onClick={() => setLinkMode("search")}
-                size="sm"
-                type="button"
-                variant={linkMode === "search" ? "default" : "outline"}
-              >
-                Search
-              </Button>
-            </div>
-
-            {linkMode === "search" && (
-              <div className="mt-2 space-y-2">
-                <Input
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name..."
-                  value={searchQuery}
-                />
-                {isSearching && (
-                  <p className="text-muted-foreground text-sm">Searching...</p>
-                )}
-                {searchResults.length > 0 && (
-                  <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-2">
-                    {searchResults.map((result) => (
-                      <button
-                        className={`flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-accent ${
-                          selectedFinalSpace?.id === result.id
-                            ? "bg-accent"
-                            : ""
-                        }`}
-                        key={result.id}
-                        onClick={() => setSelectedFinalSpace(result)}
-                        type="button"
-                      >
-                        {result.profilePictureUrl ? (
-                          <Image
-                            alt={result.name}
-                            className="size-8 rounded-full object-cover"
-                            height={32}
-                            src={result.profilePictureUrl}
-                            width={32}
-                          />
-                        ) : (
-                          <div className="flex size-8 items-center justify-center rounded-full bg-muted">
-                            <Icon
-                              className="size-4 text-muted-foreground"
-                              icon="ph:user"
-                            />
-                          </div>
-                        )}
-                        <span className="text-sm">{result.name}</span>
-                        {selectedFinalSpace?.id === result.id && (
-                          <Icon
-                            className="ml-auto size-4 text-primary"
-                            icon="ph:check"
-                          />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {selectedFinalSpace && (
-                  <div className="flex items-center gap-2 rounded-md bg-primary/10 p-2">
-                    <Icon
-                      className="size-4 text-primary"
-                      icon="ph:link-simple"
-                    />
-                    <span className="text-sm">
-                      Linked to: {selectedFinalSpace.name}
-                    </span>
-                    <Button
-                      className="ml-auto"
-                      onClick={() => setSelectedFinalSpace(null)}
-                      size="icon-sm"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <Icon className="size-3" icon="ph:x" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <FinalSpaceLinkSection
+            isSearching={isSearching}
+            linkMode={linkMode}
+            onLinkModeChange={setLinkMode}
+            onSearchQueryChange={setSearchQuery}
+            onSelectFinalSpace={setSelectedFinalSpace}
+            searchQuery={searchQuery}
+            searchResults={searchResults}
+            selectedFinalSpace={selectedFinalSpace}
+          />
 
           <DialogFooter>
             <Button

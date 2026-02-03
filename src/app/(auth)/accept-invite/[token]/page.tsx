@@ -59,20 +59,14 @@ export default async function AcceptInvitePage({
         </SignedOut>
 
         <SignedIn>
-          <AcceptInviteForm spaceName={spaceName ?? ""} token={token} />
+          <AcceptInviteForm token={token} />
         </SignedIn>
       </div>
     </div>
   );
 }
 
-async function AcceptInviteForm({
-  token,
-  spaceName,
-}: {
-  token: string;
-  spaceName: string;
-}) {
+async function AcceptInviteForm({ token }: { token: string }) {
   // Server-side accept
   const result = await acceptInvite(token);
 

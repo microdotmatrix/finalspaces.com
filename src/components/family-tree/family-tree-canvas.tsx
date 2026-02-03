@@ -49,8 +49,7 @@ function FamilyTreeNode({
   const displayName = isSubject
     ? subjectName
     : member?.nickname || member?.firstName || "Unknown";
-
-  const hasPhoto = member?.photoUrl;
+  const photoUrl = member?.photoUrl;
 
   return (
     <div className="group relative flex flex-col items-center">
@@ -70,13 +69,13 @@ function FamilyTreeNode({
             isSubject ? "size-16" : "size-12"
           } bg-muted`}
         >
-          {hasPhoto ? (
+          {photoUrl ? (
             <Image
               alt={displayName}
               className="object-cover"
               fill
               sizes={isSubject ? "64px" : "48px"}
-              src={member!.photoUrl!}
+              src={photoUrl}
             />
           ) : (
             <div className="flex size-full items-center justify-center">

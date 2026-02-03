@@ -4,8 +4,10 @@ import { useAtomValue } from "jotai";
 import Image from "next/image";
 import {
   type ChangeEvent,
+  type ReactNode,
   useCallback,
   useEffect,
+  useMemo,
   useState,
   useTransition,
 } from "react";
@@ -133,6 +135,9 @@ const CATEGORY_ORDER: FavoriteCategory[] = [
   "teams",
 ];
 
+const SEARCH_SKELETON_KEYS = ["search-1", "search-2", "search-3"] as const;
+const FAVORITES_SKELETON_KEYS = ["favorites-1", "favorites-2"] as const;
+
 function SearchResultItem({
   result,
   onAdd,
@@ -144,6 +149,14 @@ function SearchResultItem({
   isAdding: boolean;
   isAdded: boolean;
 }) {
+  let actionIcon = <Icon className="size-4" icon="ph:plus" />;
+
+  if (isAdding) {
+    actionIcon = <Icon className="size-4 animate-spin" icon="ph:spinner" />;
+  } else if (isAdded) {
+    actionIcon = <Icon className="size-4 text-green-500" icon="ph:check" />;
+  }
+
   return (
     <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
       <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted">
@@ -176,13 +189,7 @@ function SearchResultItem({
         type="button"
         variant={isAdded ? "secondary" : "ghost"}
       >
-        {isAdding ? (
-          <Icon className="size-4 animate-spin" icon="ph:spinner" />
-        ) : isAdded ? (
-          <Icon className="size-4 text-green-500" icon="ph:check" />
-        ) : (
-          <Icon className="size-4" icon="ph:plus" />
-        )}
+        {actionIcon}
       </Button>
     </div>
   );
@@ -273,24 +280,43 @@ export function FavoritesStep() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Transition states for mutations
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [addingId, setAddingId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
 
   // Load favorites on mount
   useEffect(() => {
-    if (!finalSpaceId) return;
+    if (!finalSpaceId) {
+      return;
+    }
 
+    let isCancelled = false;
     const loadFavorites = async () => {
       setIsLoading(true);
-      const data = await getFavorites(finalSpaceId);
-      setFavorites(data.favorites);
-      setFavoriteTypes(data.types);
-      setIsLoading(false);
+      try {
+        const data = await getFavorites(finalSpaceId);
+        if (!isCancelled) {
+          setFavorites(data.favorites);
+          setFavoriteTypes(data.types);
+        }
+      } catch {
+        if (!isCancelled) {
+          toast.error("Failed to load favorites");
+          setFavorites([]);
+          setFavoriteTypes([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
     };
 
     loadFavorites();
+    return () => {
+      isCancelled = true;
+    };
   }, [finalSpaceId]);
 
   // Debounced search
@@ -322,6 +348,7 @@ export function FavoritesStep() {
     // For API-based searches, require minimum query length
     if (trimmed.length < 2) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
 
@@ -349,29 +376,36 @@ export function FavoritesStep() {
     };
   }, [searchQuery, selectedCategory]);
 
-  // Clear search when category changes
-  useEffect(() => {
+  const favoriteTypesByKey = useMemo(
+    () =>
+      new Map<FavoriteCategory, FavoriteType>(
+        favoriteTypes.map((type) => [type.key as FavoriteCategory, type])
+      ),
+    [favoriteTypes]
+  );
+
+  const currentTypeId = favoriteTypesByKey.get(selectedCategory)?.id ?? null;
+
+  const handleCategoryChange = (value: FavoriteCategory | null) => {
+    if (!value) {
+      return;
+    }
+
+    const nextCategory = value;
+    setSelectedCategory(nextCategory);
     setSearchQuery("");
     setSearchResults([]);
     setRecentlyAdded(new Set());
-  }, [selectedCategory]);
-
-  // Get the favorite type ID for the current category
-  const getFavoriteTypeId = useCallback(
-    (category: FavoriteCategory) => {
-      const type = favoriteTypes.find((t) => t.key === category);
-      return type?.id ?? null;
-    },
-    [favoriteTypes]
-  );
+  };
 
   // Add favorite handler
   const handleAdd = useCallback(
     (result: SearchResult) => {
-      if (!finalSpaceId) return;
+      if (!finalSpaceId) {
+        return;
+      }
 
-      const favoriteTypeId = getFavoriteTypeId(selectedCategory);
-      if (!favoriteTypeId) {
+      if (!currentTypeId) {
         toast.error("Category not configured");
         return;
       }
@@ -381,7 +415,7 @@ export function FavoritesStep() {
         try {
           const response = await addFavorite({
             finalSpaceId,
-            favoriteTypeId,
+            favoriteTypeId: currentTypeId,
             title: result.title,
             subtitle: result.subtitle,
             imageUrl: result.imageUrl,
@@ -404,7 +438,7 @@ export function FavoritesStep() {
         }
       });
     },
-    [finalSpaceId, selectedCategory, getFavoriteTypeId]
+    [currentTypeId, finalSpaceId]
   );
 
   // Remove favorite handler
@@ -428,37 +462,21 @@ export function FavoritesStep() {
     });
   }, []);
 
-  // Group favorites by type
-  const favoritesByType = favorites.reduce(
-    (acc, fav) => {
-      const typeId = fav.favoriteTypeId;
-      if (typeId) {
-        if (!acc[typeId]) acc[typeId] = [];
-        acc[typeId].push(fav);
-      }
-      return acc;
-    },
-    {} as Record<string, MemorialFavorite[]>
-  );
-
-  // Get config for a favorite type
-  const getTypeConfig = useCallback(
-    (typeId: string) => {
-      const type = favoriteTypes.find((t) => t.id === typeId);
-      if (!type) return undefined;
-      return CATEGORY_CONFIG[type.key as FavoriteCategory];
-    },
-    [favoriteTypes]
-  );
-
-  // Get type name
-  const getTypeName = useCallback(
-    (typeId: string) => {
-      const type = favoriteTypes.find((t) => t.id === typeId);
-      return type?.namePlural ?? type?.name ?? "Favorites";
-    },
-    [favoriteTypes]
-  );
+  const favoritesByType = useMemo(() => {
+    return favorites.reduce(
+      (acc, fav) => {
+        const typeId = fav.favoriteTypeId;
+        if (typeId) {
+          if (!acc[typeId]) {
+            acc[typeId] = [];
+          }
+          acc[typeId].push(fav);
+        }
+        return acc;
+      },
+      {} as Record<string, MemorialFavorite[]>
+    );
+  }, [favorites]);
 
   if (!finalSpaceId) {
     return (
@@ -472,10 +490,115 @@ export function FavoritesStep() {
   }
 
   const categoryConfig = CATEGORY_CONFIG[selectedCategory];
-  const currentTypeId = getFavoriteTypeId(selectedCategory);
   const currentCategoryFavorites = currentTypeId
     ? (favoritesByType[currentTypeId] ?? [])
     : [];
+  const trimmedQuery = searchQuery.trim();
+  const showQueryHint =
+    trimmedQuery.length < 2 &&
+    selectedCategory !== "boardgames" &&
+    selectedCategory !== "teams";
+
+  let searchContent: ReactNode = null;
+
+  if (isSearching) {
+    searchContent = (
+      <div className="space-y-2">
+        {SEARCH_SKELETON_KEYS.map((key) => (
+          <Skeleton className="h-20 w-full" key={key} />
+        ))}
+      </div>
+    );
+  } else if (searchResults.length > 0) {
+    searchContent = (
+      <div className="max-h-80 space-y-2 overflow-y-auto">
+        {searchResults.map((result) => (
+          <SearchResultItem
+            isAdded={
+              recentlyAdded.has(result.id) ||
+              currentCategoryFavorites.some((f) => f.apiId === result.id)
+            }
+            isAdding={addingId === result.id}
+            key={result.id}
+            onAdd={() => handleAdd(result)}
+            result={result}
+          />
+        ))}
+      </div>
+    );
+  } else if (trimmedQuery.length >= 2) {
+    searchContent = (
+      <p className="py-4 text-center text-muted-foreground text-sm">
+        No results found for "{searchQuery}"
+      </p>
+    );
+  } else if (showQueryHint) {
+    searchContent = (
+      <p className="py-4 text-center text-muted-foreground text-sm">
+        Type at least 2 characters to search
+      </p>
+    );
+  }
+
+  let favoritesContent: ReactNode = null;
+
+  if (isLoading) {
+    favoritesContent = (
+      <div className="space-y-4">
+        {FAVORITES_SKELETON_KEYS.map((key) => (
+          <Skeleton className="h-24 w-full" key={key} />
+        ))}
+      </div>
+    );
+  } else if (favorites.length === 0) {
+    favoritesContent = (
+      <p className="py-8 text-center text-muted-foreground">
+        No favorites added yet. Search and add some above!
+      </p>
+    );
+  } else {
+    favoritesContent = (
+      <div className="space-y-6">
+        {CATEGORY_ORDER.map((category) => {
+          const type = favoriteTypesByKey.get(category);
+          if (!type) {
+            return null;
+          }
+
+          const categoryFavorites = favoritesByType[type.id];
+          if (!categoryFavorites || categoryFavorites.length === 0) {
+            return null;
+          }
+
+          const config = CATEGORY_CONFIG[category];
+          const typeName = type.namePlural ?? type.name ?? "Favorites";
+
+          return (
+            <div className="space-y-3" key={category}>
+              <div className="flex items-center gap-2">
+                <Icon className="size-5" icon={config.icon} />
+                <h4 className="font-medium">{typeName}</h4>
+                <span className="text-muted-foreground text-sm">
+                  ({categoryFavorites.length})
+                </span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {categoryFavorites.map((fav) => (
+                  <FavoriteItem
+                    favorite={fav}
+                    isRemoving={removingId === fav.id}
+                    key={fav.id}
+                    onRemove={() => handleRemove(fav)}
+                    typeConfig={config}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -491,12 +614,7 @@ export function FavoritesStep() {
         {/* Category Selector */}
         <div className="space-y-2">
           <Label>Type of Favorite</Label>
-          <Select
-            onValueChange={(value) =>
-              setSelectedCategory(value as FavoriteCategory)
-            }
-            value={selectedCategory}
-          >
+          <Select onValueChange={handleCategoryChange} value={selectedCategory}>
             <SelectTrigger className="w-full">
               <SelectValue>
                 <span className="flex items-center gap-2">
@@ -538,91 +656,14 @@ export function FavoritesStep() {
         </div>
 
         {/* Search Results */}
-        {isSearching ? (
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton className="h-20 w-full" key={`skeleton-${i}`} />
-            ))}
-          </div>
-        ) : searchResults.length > 0 ? (
-          <div className="max-h-80 space-y-2 overflow-y-auto">
-            {searchResults.map((result) => (
-              <SearchResultItem
-                isAdded={
-                  recentlyAdded.has(result.id) ||
-                  currentCategoryFavorites.some((f) => f.apiId === result.id)
-                }
-                isAdding={addingId === result.id}
-                key={result.id}
-                onAdd={() => handleAdd(result)}
-                result={result}
-              />
-            ))}
-          </div>
-        ) : searchQuery.trim().length >= 2 ? (
-          <p className="py-4 text-center text-muted-foreground text-sm">
-            No results found for "{searchQuery}"
-          </p>
-        ) : selectedCategory !== "boardgames" &&
-          selectedCategory !== "teams" ? (
-          <p className="py-4 text-center text-muted-foreground text-sm">
-            Type at least 2 characters to search
-          </p>
-        ) : null}
+        {searchContent}
       </div>
 
       {/* Added Favorites Section */}
       <div className="space-y-6">
         <h3 className="font-semibold text-lg">Added Favorites</h3>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <Skeleton className="h-24 w-full" key={`fav-skeleton-${i}`} />
-            ))}
-          </div>
-        ) : favorites.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">
-            No favorites added yet. Search and add some above!
-          </p>
-        ) : (
-          <div className="space-y-6">
-            {CATEGORY_ORDER.map((category) => {
-              const typeId = getFavoriteTypeId(category);
-              if (!typeId) return null;
-
-              const categoryFavorites = favoritesByType[typeId];
-              if (!categoryFavorites || categoryFavorites.length === 0)
-                return null;
-
-              const config = CATEGORY_CONFIG[category];
-              const typeName = getTypeName(typeId);
-
-              return (
-                <div className="space-y-3" key={category}>
-                  <div className="flex items-center gap-2">
-                    <Icon className="size-5" icon={config.icon} />
-                    <h4 className="font-medium">{typeName}</h4>
-                    <span className="text-muted-foreground text-sm">
-                      ({categoryFavorites.length})
-                    </span>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {categoryFavorites.map((fav) => (
-                      <FavoriteItem
-                        favorite={fav}
-                        isRemoving={removingId === fav.id}
-                        key={fav.id}
-                        onRemove={() => handleRemove(fav)}
-                        typeConfig={config}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {favoritesContent}
       </div>
     </div>
   );

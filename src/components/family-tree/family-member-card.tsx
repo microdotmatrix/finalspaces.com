@@ -24,7 +24,7 @@ export function FamilyMemberCard({
   const fullName = [member.firstName, member.lastName]
     .filter(Boolean)
     .join(" ");
-  const hasPhoto = !!member.photoUrl;
+  const photoUrl = member.photoUrl;
   const isLinked = !!member.linkedFinalSpaceId;
 
   const lifespan =
@@ -36,13 +36,13 @@ export function FamilyMemberCard({
     <div className="group relative flex items-start gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50">
       {/* Photo */}
       <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
-        {hasPhoto ? (
+        {photoUrl ? (
           <Image
             alt={displayName}
             className="object-cover"
             fill
             sizes="56px"
-            src={member.photoUrl!}
+            src={photoUrl}
           />
         ) : (
           <div className="flex size-full items-center justify-center">

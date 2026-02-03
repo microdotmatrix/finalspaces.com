@@ -76,20 +76,29 @@ export function FamilyStep() {
       return;
     }
 
+    let isCancelled = false;
     const loadMembers = async () => {
       setIsLoading(true);
       try {
         const data = await getFamilyMembers(finalSpaceId);
-        setMembers(data);
-      } catch (error) {
-        console.error("Failed to load family members:", error);
-        toast.error("Failed to load family members");
+        if (!isCancelled) {
+          setMembers(data);
+        }
+      } catch {
+        if (!isCancelled) {
+          toast.error("Failed to load family members");
+        }
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadMembers();
+    return () => {
+      isCancelled = true;
+    };
   }, [finalSpaceId]);
 
   // Auto-switch to list view on mobile

@@ -4,11 +4,15 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AlbumsGrid } from "@/components/memorial/albums-grid";
+import { FavoritesSection } from "@/components/memorial/favorites-section";
 import { GuestbookSection } from "@/components/memorial/guestbook-section";
 import { HeaderCarousel } from "@/components/memorial/header-carousel";
+import { LocationMapPlaceholder } from "@/components/memorial/location-map-placeholder";
+import { MediaPlaceholder } from "@/components/memorial/media-placeholder";
 import { SpotifySection } from "@/components/memorial/spotify-section";
 import { TimelineSection } from "@/components/memorial/timeline-section";
 import { YouTubeSection } from "@/components/memorial/youtube-section";
+import { getFavorites } from "@/lib/actions/favorites-actions";
 import { getFinalSpaceBySlug } from "@/lib/actions/final-space-actions";
 import {
   getPublicAlbums,
@@ -78,10 +82,11 @@ export default async function MemorialPage({ params }: Props) {
   }
 
   // Fetch additional data
-  const [headerImages, albums, mediaLinks] = await Promise.all([
+  const [headerImages, albums, mediaLinks, favoritesData] = await Promise.all([
     getPublicHeaderCarouselImages(space.id),
     getPublicAlbums(space.id),
     getEnrichedFinalSpaceMediaLinks(space.id),
+    getFavorites(space.id),
   ]);
 
   const displayName = getDisplayName(space);
@@ -99,7 +104,7 @@ export default async function MemorialPage({ params }: Props) {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background pb-12">
       {/* Header Carousel */}
       {headerImages.length > 0 ? (
         <HeaderCarousel
@@ -128,48 +133,74 @@ export default async function MemorialPage({ params }: Props) {
         />
       )}
 
-      <MemorialBio bioText={space.bioText} />
-      <MemorialHighlights lifeHighlights={space.lifeHighlights} />
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <MemorialBio bioText={space.bioText} />
+            <MemorialHighlights lifeHighlights={space.lifeHighlights} />
 
-      {/* Photo Albums */}
-      {albums.length > 0 && <AlbumsGrid albums={albums} slug={slug} />}
+            {/* Photo Albums */}
+            {albums.length > 0 && <AlbumsGrid albums={albums} slug={slug} />}
 
-      {/* Spotify & YouTube */}
-      {mediaLinks.spotifyLinks.length > 0 && (
-        <SpotifySection
-          spotifyLinks={mediaLinks.spotifyLinks}
-          storageKey={`spotify-player-${space.id}`}
-        />
-      )}
-      {mediaLinks.youtubeLinks.length > 0 && (
-        <YouTubeSection youtubeLinks={mediaLinks.youtubeLinks} />
-      )}
+            {/* Favorites */}
+            <FavoritesSection
+              favorites={favoritesData.favorites}
+              favoriteTypes={favoritesData.types}
+            />
 
-      {/* Timeline Section */}
-      <Suspense
-        fallback={<div className="py-12 text-center">Loading timeline...</div>}
-      >
-        <TimelineSection finalSpaceId={space.id} />
-      </Suspense>
+            {/* Spotify & YouTube */}
+            {mediaLinks.spotifyLinks.length > 0 && (
+              <SpotifySection
+                spotifyLinks={mediaLinks.spotifyLinks}
+                storageKey={`spotify-player-${space.id}`}
+              />
+            )}
+            {mediaLinks.youtubeLinks.length > 0 && (
+              <YouTubeSection youtubeLinks={mediaLinks.youtubeLinks} />
+            )}
 
-      <MemorialPlaces
-        hometown={space.hometown}
-        placeOfBirth={space.placeOfBirth}
-      />
-
-      {/* Guestbook Section */}
-      <Suspense
-        fallback={
-          <div className="bg-muted/30 py-12 text-center">
-            Loading guestbook...
+            {/* Media Placeholder */}
+            <MediaPlaceholder />
           </div>
-        }
-      >
-        <GuestbookSection
-          displayName={displayName || space.name}
-          finalSpaceId={space.id}
-        />
-      </Suspense>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Timeline Section */}
+            <Suspense
+              fallback={
+                <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
+                  Loading timeline...
+                </div>
+              }
+            >
+              <TimelineSection finalSpaceId={space.id} />
+            </Suspense>
+
+            {/* Location Map Placeholder */}
+            <LocationMapPlaceholder />
+
+            <MemorialPlaces
+              hometown={space.hometown}
+              placeOfBirth={space.placeOfBirth}
+            />
+
+            {/* Guestbook Section */}
+            <Suspense
+              fallback={
+                <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
+                  Loading guestbook...
+                </div>
+              }
+            >
+              <GuestbookSection
+                displayName={displayName || space.name}
+                finalSpaceId={space.id}
+              />
+            </Suspense>
+          </div>
+        </div>
+      </div>
 
       {/* Footer */}
       <footer className="border-t py-8">
@@ -287,16 +318,14 @@ function MemorialBio({ bioText }: MemorialBioProps) {
   }
 
   return (
-    <section className="py-12">
-      <div className="container mx-auto max-w-3xl px-4">
-        <h2 className="mb-6 font-semibold text-2xl">About</h2>
-        <div className="prose prose-lg dark:prose-invert max-w-none">
-          {bioText.split("\n").map((paragraph) => (
-            <p key={`${paragraph}-${paragraph.length}`}>{paragraph}</p>
-          ))}
-        </div>
+    <div className="p-4">
+      <h2 className="mb-6 font-semibold text-2xl">About</h2>
+      <div className="prose prose-lg dark:prose-invert max-w-none">
+        {bioText.split("\n").map((paragraph) => (
+          <p key={`${paragraph}-${paragraph.length}`}>{paragraph}</p>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -310,16 +339,14 @@ function MemorialHighlights({ lifeHighlights }: MemorialHighlightsProps) {
   }
 
   return (
-    <section className="bg-muted/30 py-12">
-      <div className="container mx-auto max-w-3xl px-4">
-        <h2 className="mb-6 font-semibold text-2xl">Life Highlights</h2>
-        <div className="prose prose-lg dark:prose-invert max-w-none">
-          {lifeHighlights.split("\n").map((line) => (
-            <p key={`${line}-${line.length}`}>{line}</p>
-          ))}
-        </div>
+    <div className="rounded-xl border bg-card p-6 shadow-sm">
+      <h2 className="mb-6 font-semibold text-2xl">Life Highlights</h2>
+      <div className="prose prose-lg dark:prose-invert max-w-none">
+        {lifeHighlights.split("\n").map((line) => (
+          <p key={`${line}-${line.length}`}>{line}</p>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -334,28 +361,26 @@ function MemorialPlaces({ placeOfBirth, hometown }: MemorialPlacesProps) {
   }
 
   return (
-    <section className="py-12">
-      <div className="container mx-auto max-w-3xl px-4">
-        <h2 className="mb-6 font-semibold text-2xl">Places</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {placeOfBirth && (
-            <div className="rounded-lg bg-card p-4 shadow">
-              <p className="font-medium text-muted-foreground text-sm">
-                Place of Birth
-              </p>
-              <p className="text-lg">{placeOfBirth}</p>
-            </div>
-          )}
-          {hometown && (
-            <div className="rounded-lg bg-card p-4 shadow">
-              <p className="font-medium text-muted-foreground text-sm">
-                Hometown
-              </p>
-              <p className="text-lg">{hometown}</p>
-            </div>
-          )}
-        </div>
+    <div className="rounded-xl border bg-card p-6 shadow-sm">
+      <h2 className="mb-6 font-semibold text-2xl">Places</h2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {placeOfBirth && (
+          <div className="rounded-lg bg-muted/50 p-4">
+            <p className="font-medium text-muted-foreground text-sm">
+              Place of Birth
+            </p>
+            <p className="text-lg">{placeOfBirth}</p>
+          </div>
+        )}
+        {hometown && (
+          <div className="rounded-lg bg-muted/50 p-4">
+            <p className="font-medium text-muted-foreground text-sm">
+              Hometown
+            </p>
+            <p className="text-lg">{hometown}</p>
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
 }

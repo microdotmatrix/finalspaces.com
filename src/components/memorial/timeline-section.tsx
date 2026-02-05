@@ -13,10 +13,8 @@ export async function TimelineSection({ finalSpaceId }: TimelineSectionProps) {
   }
 
   return (
-    <section className="py-12">
-      <div className="container mx-auto max-w-4xl px-4">
-        <LifeTimeline events={events} />
-      </div>
-    </section>
+    <div className="rounded-xl border bg-card p-6 shadow-sm">
+      <LifeTimeline events={events} />
+    </div>
   );
 }

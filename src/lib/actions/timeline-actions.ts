@@ -16,6 +16,46 @@ import {
 // TYPES & VALIDATION
 // ==========================================
 
+export interface TimelineEventWithCategory {
+  id: string;
+  finalSpaceId: string;
+  categoryId: string | null;
+  title: string;
+  description: string | null;
+  organization: string | null;
+  eventType:
+    | "birth"
+    | "milestone"
+    | "achievement"
+    | "family"
+    | "career"
+    | "travel"
+    | "memory"
+    | "other";
+  eventMonth: number | null;
+  eventDay: number | null;
+  eventYear: number | null;
+  endMonth: number | null;
+  endDay: number | null;
+  endYear: number | null;
+  location: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  addToMap: boolean;
+  mediaId: string | null;
+  sortOrder: number;
+  isPublic: boolean;
+  cardSize: "compact" | "standard" | "featured";
+  accentGradient: unknown;
+  createdAt: Date | null;
+  category: {
+    id: string;
+    name: string;
+    color: string | null;
+    icon: string | null;
+  } | null;
+}
+
 const createTimelineEventSchema = z.object({
   finalSpaceId: z.uuid(),
   categoryId: z.uuid().nullable(),
@@ -317,4 +357,243 @@ export async function getTimelineCategories(): Promise<TimelineCategory[]> {
     .from(timelineCategories)
     .where(eq(timelineCategories.isActive, true))
     .orderBy(asc(timelineCategories.sortOrder));
+}
+
+/**
+ * Get public timeline events with their categories (for public display)
+ */
+export async function getPublicTimelineEventsWithCategories(
+  finalSpaceId: string
+): Promise<TimelineEventWithCategory[]> {
+  const results = await db
+    .select({
+      event: timelineEvents,
+      category: {
+        id: timelineCategories.id,
+        name: timelineCategories.name,
+        color: timelineCategories.color,
+        icon: timelineCategories.icon,
+      },
+    })
+    .from(timelineEvents)
+    .leftJoin(
+      timelineCategories,
+      eq(timelineEvents.categoryId, timelineCategories.id)
+    )
+    .where(
+      and(
+        eq(timelineEvents.finalSpaceId, finalSpaceId),
+        eq(timelineEvents.isPublic, true)
+      )
+    )
+    .orderBy(
+      desc(timelineEvents.eventYear),
+      desc(timelineEvents.eventMonth),
+      desc(timelineEvents.eventDay)
+    );
+
+  return results.map((row) => ({
+    ...row.event,
+    category: row.category,
+  }));
+}
+
+/**
+ * Get all timeline events with their categories (for editing)
+ */
+export async function getTimelineEventsWithCategories(
+  finalSpaceId: string
+): Promise<TimelineEventWithCategory[]> {
+  const results = await db
+    .select({
+      event: timelineEvents,
+      category: {
+        id: timelineCategories.id,
+        name: timelineCategories.name,
+        color: timelineCategories.color,
+        icon: timelineCategories.icon,
+      },
+    })
+    .from(timelineEvents)
+    .leftJoin(
+      timelineCategories,
+      eq(timelineEvents.categoryId, timelineCategories.id)
+    )
+    .where(eq(timelineEvents.finalSpaceId, finalSpaceId))
+    .orderBy(
+      desc(timelineEvents.eventYear),
+      desc(timelineEvents.eventMonth),
+      desc(timelineEvents.eventDay)
+    );
+
+  return results.map((row) => ({
+    ...row.event,
+    category: row.category,
+  }));
+}
+
+/**
+ * Auto-create birth and death events from FinalSpace dates
+ */
+export async function autoCreateBirthDeathEvents(
+  finalSpaceId: string,
+  displayName: string,
+  birthDate: string | null,
+  deathDate: string | null,
+  placeOfBirth: string | null
+): Promise<ActionResult> {
+  const user = await requireUser();
+  await requireTimelineOwnership(user.id, finalSpaceId);
+
+  // Get the "personal" category for these events
+  const [personalCategory] = await db
+    .select({ id: timelineCategories.id })
+    .from(timelineCategories)
+    .where(eq(timelineCategories.key, "personal"))
+    .limit(1);
+
+  const categoryId = personalCategory?.id ?? null;
+  const eventsToCreate: Array<typeof timelineEvents.$inferInsert> = [];
+
+  // Check for existing birth event
+  if (birthDate) {
+    const parsed = parseDateString(birthDate);
+    const [existingBirth] = await db
+      .select({ id: timelineEvents.id })
+      .from(timelineEvents)
+      .where(
+        and(
+          eq(timelineEvents.finalSpaceId, finalSpaceId),
+          eq(timelineEvents.eventType, "birth")
+        )
+      )
+      .limit(1);
+
+    if (!existingBirth && parsed) {
+      const sortOrder = await getNextSortOrder(finalSpaceId);
+      eventsToCreate.push({
+        finalSpaceId,
+        categoryId,
+        title: `${displayName} was born`,
+        description: placeOfBirth ? `Born in ${placeOfBirth}` : null,
+        eventType: "birth",
+        eventMonth: parsed.month,
+        eventDay: parsed.day,
+        eventYear: parsed.year,
+        location: placeOfBirth,
+        isPublic: true,
+        sortOrder,
+      });
+    }
+  }
+
+  // Check for existing death event
+  if (deathDate) {
+    const parsed = parseDateString(deathDate);
+    const [existingDeath] = await db
+      .select({ id: timelineEvents.id })
+      .from(timelineEvents)
+      .where(
+        and(
+          eq(timelineEvents.finalSpaceId, finalSpaceId),
+          eq(timelineEvents.eventType, "other"),
+          eq(timelineEvents.title, `${displayName} passed away`)
+        )
+      )
+      .limit(1);
+
+    if (!existingDeath && parsed) {
+      const sortOrder =
+        (await getNextSortOrder(finalSpaceId)) + eventsToCreate.length;
+      eventsToCreate.push({
+        finalSpaceId,
+        categoryId,
+        title: `${displayName} passed away`,
+        eventType: "other",
+        eventMonth: parsed.month,
+        eventDay: parsed.day,
+        eventYear: parsed.year,
+        isPublic: true,
+        sortOrder,
+      });
+    }
+  }
+
+  if (eventsToCreate.length > 0) {
+    await db.insert(timelineEvents).values(eventsToCreate);
+
+    const slug = await getSlugForRevalidation(finalSpaceId);
+    if (slug) {
+      revalidatePath(`/m/${slug}`);
+    }
+  }
+
+  return { success: true, data: undefined };
+}
+
+/**
+ * Parse a date string like "1953-04-15" or "April 1953" into components
+ */
+function parseDateString(
+  dateStr: string
+): { year: number | null; month: number | null; day: number | null } | null {
+  if (!dateStr) return null;
+
+  // Try ISO format: YYYY-MM-DD
+  const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return {
+      year: Number.parseInt(isoMatch[1], 10),
+      month: Number.parseInt(isoMatch[2], 10),
+      day: Number.parseInt(isoMatch[3], 10),
+    };
+  }
+
+  // Try partial ISO: YYYY-MM
+  const partialIsoMatch = dateStr.match(/^(\d{4})-(\d{2})$/);
+  if (partialIsoMatch) {
+    return {
+      year: Number.parseInt(partialIsoMatch[1], 10),
+      month: Number.parseInt(partialIsoMatch[2], 10),
+      day: null,
+    };
+  }
+
+  // Try year only: YYYY
+  const yearOnlyMatch = dateStr.match(/^(\d{4})$/);
+  if (yearOnlyMatch) {
+    return {
+      year: Number.parseInt(yearOnlyMatch[1], 10),
+      month: null,
+      day: null,
+    };
+  }
+
+  // Try "Month YYYY" format
+  const monthYearMatch = dateStr.match(
+    /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})$/i
+  );
+  if (monthYearMatch) {
+    const months: Record<string, number> = {
+      january: 1,
+      february: 2,
+      march: 3,
+      april: 4,
+      may: 5,
+      june: 6,
+      july: 7,
+      august: 8,
+      september: 9,
+      october: 10,
+      november: 11,
+      december: 12,
+    };
+    return {
+      year: Number.parseInt(monthYearMatch[2], 10),
+      month: months[monthYearMatch[1].toLowerCase()] ?? null,
+      day: null,
+    };
+  }
+
+  return null;
 }

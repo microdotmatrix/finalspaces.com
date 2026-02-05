@@ -1,12 +1,12 @@
-import { PublicTimeline } from "@/components/timeline/public-timeline";
-import { getPublicTimelineEvents } from "@/lib/actions/timeline-actions";
+import { LifeTimeline } from "@/components/timeline/life-timeline";
+import { getPublicTimelineEventsWithCategories } from "@/lib/actions/timeline-actions";
 
 interface TimelineSectionProps {
   finalSpaceId: string;
 }
 
 export async function TimelineSection({ finalSpaceId }: TimelineSectionProps) {
-  const events = await getPublicTimelineEvents(finalSpaceId);
+  const events = await getPublicTimelineEventsWithCategories(finalSpaceId);
 
   if (events.length === 0) {
     return null;
@@ -14,9 +14,8 @@ export async function TimelineSection({ finalSpaceId }: TimelineSectionProps) {
 
   return (
     <section className="py-12">
-      <div className="container mx-auto px-4">
-        <h2 className="mb-8 font-semibold text-2xl">Life Timeline</h2>
-        <PublicTimeline events={events} />
+      <div className="container mx-auto max-w-4xl px-4">
+        <LifeTimeline events={events} />
       </div>
     </section>
   );

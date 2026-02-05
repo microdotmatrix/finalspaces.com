@@ -2,6 +2,19 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  cacheComponents: true,
+  experimental: {
+    viewTransition: true,
+    useLightningcss: true,
+    authInterrupts: true,
+    // Enable optimized package imports
+    optimizePackageImports: [
+      "lucide-react",
+      "@phosphor-icons/react",
+      "date-fns",
+      "motion",
+    ],
+  },
   images: {
     remotePatterns: [
       {

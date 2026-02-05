@@ -1,4 +1,11 @@
 import { LifeTimeline } from "@/components/timeline/life-timeline";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getPublicTimelineEventsWithCategories } from "@/lib/actions/timeline-actions";
 
 interface TimelineSectionProps {
@@ -13,8 +20,18 @@ export async function TimelineSection({ finalSpaceId }: TimelineSectionProps) {
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 shadow-sm">
-      <LifeTimeline events={events} />
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">Life Timeline</CardTitle>
+        <CardAction>
+          <span className="text-muted-foreground text-sm">
+            {events.length} {events.length === 1 ? "event" : "events"}
+          </span>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <LifeTimeline events={events} hideHeader />
+      </CardContent>
+    </Card>
   );
 }

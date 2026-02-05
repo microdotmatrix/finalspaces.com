@@ -1,8 +1,3 @@
-import { eq } from "drizzle-orm";
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { AlbumsGrid } from "@/components/memorial/albums-grid";
 import { FavoritesSection } from "@/components/memorial/favorites-section";
 import { GuestbookSection } from "@/components/memorial/guestbook-section";
@@ -12,6 +7,7 @@ import { MediaPlaceholder } from "@/components/memorial/media-placeholder";
 import { SpotifySection } from "@/components/memorial/spotify-section";
 import { TimelineSection } from "@/components/memorial/timeline-section";
 import { YouTubeSection } from "@/components/memorial/youtube-section";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFavorites } from "@/lib/actions/favorites-actions";
 import { getFinalSpaceBySlug } from "@/lib/actions/final-space-actions";
 import {
@@ -21,6 +17,11 @@ import {
 import { db } from "@/lib/db";
 import { type FinalSpace, mediaAssets } from "@/lib/db/schema";
 import { getEnrichedFinalSpaceMediaLinks } from "@/lib/media/link-metadata";
+import { eq } from "drizzle-orm";
+import type { Metadata } from "next";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -169,9 +170,11 @@ export default async function MemorialPage({ params }: Props) {
             {/* Timeline Section */}
             <Suspense
               fallback={
-                <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-                  Loading timeline...
-                </div>
+                <Card className="p-12 text-center">
+                  <div className="text-muted-foreground">
+                    Loading timeline...
+                  </div>
+                </Card>
               }
             >
               <TimelineSection finalSpaceId={space.id} />
@@ -188,9 +191,11 @@ export default async function MemorialPage({ params }: Props) {
             {/* Guestbook Section */}
             <Suspense
               fallback={
-                <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-                  Loading guestbook...
-                </div>
+                <Card className="p-12 text-center">
+                  <div className="text-muted-foreground">
+                    Loading guestbook...
+                  </div>
+                </Card>
               }
             >
               <GuestbookSection
@@ -318,14 +323,18 @@ function MemorialBio({ bioText }: MemorialBioProps) {
   }
 
   return (
-    <div className="p-4">
-      <h2 className="mb-6 font-semibold text-2xl">About</h2>
-      <div className="prose prose-lg dark:prose-invert max-w-none">
-        {bioText.split("\n").map((paragraph) => (
-          <p key={`${paragraph}-${paragraph.length}`}>{paragraph}</p>
-        ))}
-      </div>
-    </div>
+    <Card className="bg-transparent border-none ring-0 shadow-none">
+      <CardHeader>
+        <CardTitle className="text-2xl">About</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="prose prose-lg dark:prose-invert max-w-none">
+          {bioText.split("\n").map((paragraph) => (
+            <p key={`${paragraph}-${paragraph.length}`}>{paragraph}</p>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -339,14 +348,18 @@ function MemorialHighlights({ lifeHighlights }: MemorialHighlightsProps) {
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 shadow-sm">
-      <h2 className="mb-6 font-semibold text-2xl">Life Highlights</h2>
-      <div className="prose prose-lg dark:prose-invert max-w-none">
-        {lifeHighlights.split("\n").map((line) => (
-          <p key={`${line}-${line.length}`}>{line}</p>
-        ))}
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">Life Highlights</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="prose prose-lg dark:prose-invert max-w-none">
+          {lifeHighlights.split("\n").map((line) => (
+            <p key={`${line}-${line.length}`}>{line}</p>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -361,26 +374,30 @@ function MemorialPlaces({ placeOfBirth, hometown }: MemorialPlacesProps) {
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 shadow-sm">
-      <h2 className="mb-6 font-semibold text-2xl">Places</h2>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {placeOfBirth && (
-          <div className="rounded-lg bg-muted/50 p-4">
-            <p className="font-medium text-muted-foreground text-sm">
-              Place of Birth
-            </p>
-            <p className="text-lg">{placeOfBirth}</p>
-          </div>
-        )}
-        {hometown && (
-          <div className="rounded-lg bg-muted/50 p-4">
-            <p className="font-medium text-muted-foreground text-sm">
-              Hometown
-            </p>
-            <p className="text-lg">{hometown}</p>
-          </div>
-        )}
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">Places</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {placeOfBirth && (
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="font-medium text-muted-foreground text-sm">
+                Place of Birth
+              </p>
+              <p className="text-lg">{placeOfBirth}</p>
+            </div>
+          )}
+          {hometown && (
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="font-medium text-muted-foreground text-sm">
+                Hometown
+              </p>
+              <p className="text-lg">{hometown}</p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

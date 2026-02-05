@@ -1,5 +1,12 @@
 import { GuestbookForm } from "@/components/guestbook/guestbook-form";
 import { GuestbookList } from "@/components/guestbook/guestbook-list";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getPublicGuestbookEntries } from "@/lib/actions/guestbook-actions";
 
 interface GuestbookSectionProps {
@@ -14,23 +21,29 @@ export async function GuestbookSection({
   const entries = await getPublicGuestbookEntries(finalSpaceId);
 
   return (
-    <div className="rounded-xl border bg-card p-6 shadow-sm">
-      <h2 className="mb-6 font-semibold text-2xl">Guestbook</h2>
-      <p className="mb-8 text-muted-foreground">
-        Share a memory, tribute, or message for {displayName}.
-      </p>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">Guestbook</CardTitle>
+        <CardDescription>
+          Share a memory, tribute, or message for {displayName}.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        <div className="rounded-lg bg-muted/30 p-6 ring-1 ring-foreground/5">
+          <h3 className="mb-4 font-medium text-lg">Leave a Message</h3>
+          <GuestbookForm
+            displayName={displayName}
+            finalSpaceId={finalSpaceId}
+          />
+        </div>
 
-      <div className="mb-12 rounded-lg border bg-muted/30 p-6">
-        <h3 className="mb-4 font-medium text-lg">Leave a Message</h3>
-        <GuestbookForm displayName={displayName} finalSpaceId={finalSpaceId} />
-      </div>
-
-      <div>
-        <h3 className="mb-6 font-medium text-lg">
-          Messages ({entries.length})
-        </h3>
-        <GuestbookList entries={entries} />
-      </div>
-    </div>
+        <div>
+          <h3 className="mb-6 font-medium text-lg">
+            Messages ({entries.length})
+          </h3>
+          <GuestbookList entries={entries} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

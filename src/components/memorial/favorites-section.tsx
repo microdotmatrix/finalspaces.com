@@ -1,6 +1,7 @@
-import Image from "next/image";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import type { FavoriteType, MemorialFavorite } from "@/lib/db/schema";
+import Image from "next/image";
 
 interface FavoritesSectionProps {
   favorites: MemorialFavorite[];
@@ -41,9 +42,11 @@ export function FavoritesSection({
   });
 
   return (
-    <section className="p-4">
-      <h2 className="mb-6 font-semibold text-2xl">Favorites</h2>
-      <div className="space-y-8">
+    <Card className="bg-transparent border-none ring-0 shadow-none">
+      <CardHeader>
+        <CardTitle className="text-2xl">Favorites</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-8">
         {sortedTypeIds.map((typeId) => {
           const type = typesById.get(typeId);
           const items = favoritesByType[typeId];
@@ -66,14 +69,17 @@ export function FavoritesSection({
             </div>
           );
         })}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 
 function FavoriteCard({ favorite }: { favorite: MemorialFavorite }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3 transition-colors hover:bg-muted/50">
+    <Card
+      className="flex flex-row items-start gap-3 px-4 transition-colors hover:bg-muted/50"
+      size="sm"
+    >
       <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-muted">
         {favorite.imageUrl ? (
           <Image
@@ -110,6 +116,6 @@ function FavoriteCard({ favorite }: { favorite: MemorialFavorite }) {
           </a>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

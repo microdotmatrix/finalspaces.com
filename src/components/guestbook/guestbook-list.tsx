@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 
+import { Card, CardContent } from "@/components/ui/card";
 import type { GuestbookEntry } from "@/lib/actions/guestbook-actions";
 
 type GuestbookListProps = {
@@ -31,34 +32,36 @@ function GuestbookEntryCard({ entry }: { entry: GuestbookEntry }) {
     : "";
 
   return (
-    <article className="rounded-lg border bg-card p-4 shadow-sm">
-      <header className="mb-3 flex items-start justify-between">
-        <div>
-          {entry.tributeTitle && (
-            <h3 className="font-semibold text-lg">{entry.tributeTitle}</h3>
-          )}
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <span className="font-medium text-foreground">{displayName}</span>
-            {entry.relationship && (
-              <>
-                <span>·</span>
-                <span>{entry.relationship}</span>
-              </>
+    <Card>
+      <CardContent>
+        <header className="mb-3 flex items-start justify-between">
+          <div>
+            {entry.tributeTitle && (
+              <h3 className="font-semibold text-lg">{entry.tributeTitle}</h3>
             )}
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <span className="font-medium text-foreground">{displayName}</span>
+              {entry.relationship && (
+                <>
+                  <span>·</span>
+                  <span>{entry.relationship}</span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-        {timeAgo && (
-          <time
-            className="text-muted-foreground text-xs"
-            dateTime={entry.createdAt?.toISOString()}
-          >
-            {timeAgo}
-          </time>
-        )}
-      </header>
-      <p className="whitespace-pre-wrap text-sm leading-relaxed">
-        {entry.message}
-      </p>
-    </article>
+          {timeAgo && (
+            <time
+              className="text-muted-foreground text-xs"
+              dateTime={entry.createdAt?.toISOString()}
+            >
+              {timeAgo}
+            </time>
+          )}
+        </header>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+          {entry.message}
+        </p>
+      </CardContent>
+    </Card>
   );
 }

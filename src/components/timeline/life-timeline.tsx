@@ -7,13 +7,17 @@ import { TimelineYearMarker } from "./timeline-year-marker";
 
 interface LifeTimelineProps {
   events: TimelineEventWithCategory[];
+  hideHeader?: boolean;
 }
 
-export function LifeTimeline({ events }: LifeTimelineProps) {
+export function LifeTimeline({
+  events,
+  hideHeader = false,
+}: LifeTimelineProps) {
   if (events.length === 0) {
     return (
-      <div className="rounded-lg border-2 border-muted-foreground/25 border-dashed p-8 text-center">
-        <p className="text-muted-foreground">No timeline events yet.</p>
+      <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+        <p>No timeline events yet.</p>
       </div>
     );
   }
@@ -22,7 +26,7 @@ export function LifeTimeline({ events }: LifeTimelineProps) {
 
   return (
     <div className="space-y-2">
-      <TimelineHeader eventCount={events.length} />
+      {!hideHeader && <TimelineHeader eventCount={events.length} />}
 
       {/* Timeline content */}
       <div className="relative">

@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import type { SpotifyTrack } from "@/lib/validation/external-links";
@@ -214,7 +215,7 @@ export function SpotifyPreviewPlayer({
   }, [subtitle, title]);
 
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
+    <Card className="gap-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         {header}
         {sourceUrl && (
@@ -230,7 +231,7 @@ export function SpotifyPreviewPlayer({
         )}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           aria-label={isPlaying ? "Pause preview" : "Play preview"}
           disabled={!canPlay}
@@ -276,7 +277,7 @@ export function SpotifyPreviewPlayer({
         </div>
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="space-y-2">
         {tracks.map((track, index) => {
           const isActive = index === currentIndex;
           const hasPreview = Boolean(track.previewUrl);
@@ -337,6 +338,6 @@ export function SpotifyPreviewPlayer({
           srcLang="en"
         />
       </audio>
-    </div>
+    </Card>
   );
 }

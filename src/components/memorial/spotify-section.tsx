@@ -1,4 +1,11 @@
 import { SpotifyPreviewPlayer } from "@/components/memorial/spotify-preview-player";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type {
   SpotifyLink,
   SpotifyTrack,
@@ -28,12 +35,12 @@ export function SpotifySection({
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 shadow-sm">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold text-2xl">Spotify</h2>
-        <p className="text-muted-foreground text-sm">30-second previews</p>
-      </div>
-      <div className="space-y-6">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">Spotify</CardTitle>
+        <CardDescription>30-second previews</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
         {spotifyLinks.map((link) => {
           const linkKey = link.spotifyId ?? link.url;
           const isTrack = link.type === "track" || !(link.type || link.tracks);
@@ -43,10 +50,7 @@ export function SpotifySection({
 
           if (!tracks.length) {
             return (
-              <div
-                className="rounded-xl border bg-muted/30 p-4 shadow-sm"
-                key={`${linkKey}-${link.title ?? "link"}`}
-              >
+              <Card className="p-4" key={`${linkKey}-${link.title ?? "link"}`}>
                 <div className="space-y-1">
                   <h3 className="font-semibold text-lg">
                     {link.title ?? "Spotify link"}
@@ -68,7 +72,7 @@ export function SpotifySection({
                 >
                   Open in Spotify
                 </a>
-              </div>
+              </Card>
             );
           }
 
@@ -83,7 +87,7 @@ export function SpotifySection({
             />
           );
         })}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

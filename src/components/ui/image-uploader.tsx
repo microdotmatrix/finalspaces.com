@@ -1,7 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useState } from "react";
+import {
+  type ChangeEventHandler,
+  type DragEventHandler,
+  useCallback,
+  useState,
+} from "react";
 import { Icon } from "@/components/ui/icon";
 import { useUploadThing } from "@/lib/uploadthing";
 import { cn } from "@/lib/utils";
@@ -76,8 +81,8 @@ export function ImageUploader({
     },
   });
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback<DragEventHandler<HTMLDivElement>>(
+    async (e) => {
       e.preventDefault();
       setIsDragging(false);
 
@@ -105,7 +110,7 @@ export function ImageUploader({
     [files.length, maxFiles, startUpload]
   );
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect: ChangeEventHandler<HTMLInputElement> = async (e) => {
     const selectedFiles = Array.from(e.target.files || []);
 
     if (selectedFiles.length === 0) return;

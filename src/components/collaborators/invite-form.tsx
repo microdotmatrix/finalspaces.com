@@ -1,7 +1,7 @@
 "use client";
 
 import { UserPlus } from "lucide-react";
-import { useTransition } from "react";
+import { type SubmitEventHandler, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ interface InviteFormProps {
 export function InviteForm({ finalSpaceId, onSuccess }: InviteFormProps) {
   const [isPending, startTransition] = useTransition();
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
 
@@ -42,7 +42,7 @@ export function InviteForm({ finalSpaceId, onSuccess }: InviteFormProps) {
         toast.error(result.error);
       }
     });
-  }
+  };
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>

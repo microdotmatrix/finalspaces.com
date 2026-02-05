@@ -1,7 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, useTransition } from "react";
+import {
+  type SubmitEventHandler,
+  useEffect,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -485,7 +490,7 @@ export function FamilyMemberForm({
     ? (SPECIFIC_RELATIONSHIPS[relationshipType] ?? [])
     : [];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
 
     if (!(firstName.trim() && relationship.trim())) {

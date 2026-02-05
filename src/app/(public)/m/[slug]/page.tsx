@@ -107,6 +107,7 @@ export default async function MemorialPage({ params }: Props) {
           deathDate={space.deathDate}
           displayName={displayName}
           fullName={fullName}
+          hometown={space.hometown}
           images={headerImages}
           inMemoriam={space.inMemoriam}
           nickname={space.nickname}

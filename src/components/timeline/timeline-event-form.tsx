@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { type SubmitEventHandler, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export function TimelineEventForm({
   const [isPending, startTransition] = useTransition();
   const isEditing = !!event;
 
-  function handleSubmit(formEvent: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (formEvent) => {
     formEvent.preventDefault();
     const formData = new FormData(formEvent.currentTarget);
 
@@ -112,7 +112,7 @@ export function TimelineEventForm({
         toast.error(result.error);
       }
     });
-  }
+  };
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>

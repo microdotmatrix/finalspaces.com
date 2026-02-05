@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { type SubmitEventHandler, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export function GuestbookForm({
   const [isPending, startTransition] = useTransition();
   const [isAnonymous, setIsAnonymous] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
 
@@ -54,7 +54,7 @@ export function GuestbookForm({
         toast.error(result.error);
       }
     });
-  }
+  };
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>

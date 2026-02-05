@@ -2,8 +2,8 @@
 
 import { useAtom, useSetAtom } from "jotai";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { EditTabs } from "@/components/edit/edit-tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -60,7 +60,6 @@ function ErrorState({ message }: { message: string }) {
 }
 
 function EditPageContent({ spaceId }: { spaceId: string }) {
-  const router = useRouter();
   const { isLoading, error, finalSpace } = useEditLoader(spaceId);
   const [isPublished] = useAtom(isPublishedAtom);
   const setEditMode = useSetAtom(editModeAtom);
@@ -95,8 +94,15 @@ function EditPageContent({ spaceId }: { spaceId: string }) {
         const result = await publishFinalSpace(spaceId);
 
         if (result.success && result.finalSpace) {
-          // Redirect to the published memorial
-          router.push(`/m/${result.finalSpace.slug}`);
+          toast.success("FinalSpace published successfully!", {
+            description: "Your memorial is now live and visible to the public.",
+            action: {
+              label: "View",
+              onClick: () => {
+                window.open(`/m/${result.finalSpace.slug}`, "_blank");
+              },
+            },
+          });
         } else if ("errors" in result && result.errors) {
           setPublishError(result.errors.join(", "));
         } else {

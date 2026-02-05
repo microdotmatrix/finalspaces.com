@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
+import { ImageDialog } from "@/components/elements/image-dialog";
 import { Button } from "@/components/ui/button";
 
 interface HeaderCarouselProps {
@@ -23,11 +24,28 @@ interface HeaderCarouselProps {
   birthDate?: string | null;
   deathDate?: string | null;
   inMemoriam?: boolean;
+  hometown?: string | null;
 }
 
 // Convert storage key to full UploadThing URL
 function getMediaUrl(storageKey: string): string {
   return `https://utfs.io/f/${storageKey}`;
+}
+
+// Calculate age from birth and death dates
+function calculateAge(
+  birthDate: string | null | undefined,
+  deathDate: string | null | undefined
+): number | null {
+  if (!birthDate) return null;
+  const birth = new Date(birthDate);
+  const end = deathDate ? new Date(deathDate) : new Date();
+  let age = end.getFullYear() - birth.getFullYear();
+  const monthDiff = end.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
 }
 
 export function HeaderCarousel({
@@ -40,6 +58,7 @@ export function HeaderCarousel({
   birthDate,
   deathDate,
   inMemoriam,
+  hometown,
 }: HeaderCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -77,11 +96,13 @@ export function HeaderCarousel({
     ? `https://utfs.io/f/${profilePicture}`
     : null;
 
+  const age = calculateAge(birthDate, deathDate);
+
   return (
     <section className="relative w-full">
       {/* Full-width carousel */}
       <div
-        className="embla relative h-[50vh] min-h-[400px] w-full overflow-hidden md:h-[60vh] lg:h-[70vh]"
+        className="embla relative h-[40vh] min-h-[300px] w-full overflow-hidden md:h-[50vh] lg:h-[60vh]"
         ref={emblaRef}
       >
         <div className="flex h-full">
@@ -98,8 +119,6 @@ export function HeaderCarousel({
                 sizes="100vw"
                 src={getMediaUrl(image.url)}
               />
-              {/* Subtle gradient overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10" />
             </div>
           ))}
         </div>
@@ -108,26 +127,26 @@ export function HeaderCarousel({
         {images.length > 1 && (
           <>
             <Button
-              className="absolute top-1/2 left-4 size-12 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-2 text-white backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/50"
+              className="absolute top-1/2 left-4 size-10 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-2 text-white backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/50 md:size-12"
               disabled={!canScrollPrev}
               onClick={scrollPrev}
               size="icon"
               variant="ghost"
             >
-              <ChevronLeft className="size-6" />
+              <ChevronLeft className="size-5 md:size-6" />
             </Button>
             <Button
-              className="absolute top-1/2 right-4 size-12 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-2 text-white backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/50"
+              className="absolute top-1/2 right-4 size-10 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-2 text-white backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/50 md:size-12"
               disabled={!canScrollNext}
               onClick={scrollNext}
               size="icon"
               variant="ghost"
             >
-              <ChevronRight className="size-6" />
+              <ChevronRight className="size-5 md:size-6" />
             </Button>
 
             {/* Dot indicators */}
-            <div className="absolute bottom-32 left-1/2 flex -translate-x-1/2 gap-2 md:bottom-36">
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
               {images.map((image, index) => (
                 <button
                   className={`h-2 rounded-full transition-all duration-300 ${
@@ -143,90 +162,79 @@ export function HeaderCarousel({
             </div>
           </>
         )}
+      </div>
 
-        {/* Portrait overlay - positioned on the left above name */}
-        <motion.div
-          animate={{ opacity: 1, scale: 1 }}
-          className="absolute bottom-48 left-4 z-20 md:bottom-56 md:left-8 lg:bottom-64 lg:left-12"
-          initial={{ opacity: 0, scale: 0.9 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-        >
-          <div className="relative">
-            {profilePictureUrl ? (
-              <div className="relative size-32 overflow-hidden rounded-2xl border-4 border-white/90 shadow-2xl md:size-44 lg:size-52">
-                <Image
-                  alt={displayName}
-                  className="object-cover"
-                  fill
-                  priority
-                  sizes="208px"
-                  src={profilePictureUrl}
-                />
+      {/* Profile info section - below carousel */}
+      <div className="relative bg-background">
+        <div className="container mx-auto px-4 md:px-8 lg:px-12">
+          <div className="flex items-end gap-4 md:gap-6">
+            {/* Profile picture with cutout effect - overlapping carousel */}
+            <motion.div
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative -mt-24 shrink-0 md:-mt-32 lg:-mt-40"
+              initial={{ opacity: 0, scale: 0.9 }}
+              transition={{
+                duration: 0.6,
+                ease: [0.22, 1, 0.36, 1],
+                delay: 0.2,
+              }}
+            >
+              {profilePictureUrl ? (
+                <div className="relative size-48 overflow-hidden rounded-full border-4 border-background shadow-xl md:size-64 lg:size-72">
+                  <ImageDialog
+                    alt={displayName}
+                    className="object-cover"
+                    src={profilePictureUrl}
+                  />
+                </div>
+              ) : (
+                <div className="flex size-48 items-center justify-center rounded-full border-4 border-background bg-muted font-bold text-5xl text-muted-foreground shadow-xl md:size-64 md:text-7xl lg:size-72 lg:text-8xl">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </motion.div>
+
+            {/* Name and info - beside profile picture */}
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="pb-4 md:pb-6"
+              initial={{ opacity: 0, y: 10 }}
+              transition={{
+                duration: 0.5,
+                ease: [0.22, 1, 0.36, 1],
+                delay: 0.3,
+              }}
+            >
+              <h1 className="font-semibold text-2xl text-foreground md:text-3xl lg:text-4xl">
+                {displayName}
+              </h1>
+
+              {/* Age and location */}
+              <div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm md:text-base">
+                {age !== null && <span>{age} years</span>}
+                {age !== null && hometown && <span>•</span>}
+                {hometown && <span>{hometown}</span>}
               </div>
-            ) : (
-              <div className="flex size-32 items-center justify-center rounded-2xl border-4 border-white/90 bg-white font-bold text-5xl text-slate-700 shadow-2xl md:size-44 md:text-6xl lg:size-52 lg:text-7xl">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
-            )}
-            {/* Decorative ring */}
-            <div className="absolute -inset-2 -z-10 rounded-2xl bg-gradient-to-br from-amber-200/40 via-transparent to-amber-400/30 blur-md" />
+
+              {/* Nickname */}
+              {nickname && !useNicknameOnly && (
+                <p className="mt-1 text-muted-foreground text-sm italic md:text-base">
+                  &ldquo;{nickname}&rdquo;
+                </p>
+              )}
+
+              {/* In Memoriam badge */}
+              {inMemoriam && (
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  <span className="font-medium text-muted-foreground text-xs">
+                    In Loving Memory
+                  </span>
+                </div>
+              )}
+            </motion.div>
           </div>
-        </motion.div>
-
-        {/* Name and info overlay - positioned bottom left */}
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute right-0 bottom-0 left-0 z-10 p-4 md:p-8 lg:p-12"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="max-w-2xl">
-            {/* In Memoriam badge */}
-            {inMemoriam && (
-              <motion.div
-                animate={{ opacity: 1, x: 0 }}
-                className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-md"
-                initial={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                <span className="font-medium text-white/90 text-xs uppercase tracking-wide">
-                  In Loving Memory
-                </span>
-              </motion.div>
-            )}
-
-            {/* Main name */}
-            <h1 className="font-medium font-serif text-4xl text-white tracking-tight md:text-5xl lg:text-6xl">
-              {displayName}
-            </h1>
-
-            {/* Nickname */}
-            {nickname && !useNicknameOnly && (
-              <p className="mt-2 font-serif text-white/80 text-xl italic md:text-2xl">
-                &ldquo;{nickname}&rdquo;
-              </p>
-            )}
-
-            {/* Full name subtitle */}
-            {fullName && fullName !== displayName && (
-              <p className="mt-2 text-base text-white/60 md:text-lg">
-                {fullName}
-              </p>
-            )}
-
-            {/* Dates */}
-            {(birthDate || deathDate) && (
-              <div className="mt-4 flex items-center gap-3 text-sm text-white/70 md:text-base">
-                {birthDate && <span>{birthDate}</span>}
-                {birthDate && deathDate && (
-                  <span className="text-white/40">—</span>
-                )}
-                {deathDate && <span>{deathDate}</span>}
-              </div>
-            )}
-          </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

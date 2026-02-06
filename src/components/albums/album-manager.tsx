@@ -287,7 +287,7 @@ export function AlbumManager({
             <span className="ml-2 text-muted-foreground text-xs">(max 5)</span>
           )}
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="shadow-black/80 shadow-xl sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Create Album</DialogTitle>
           </DialogHeader>

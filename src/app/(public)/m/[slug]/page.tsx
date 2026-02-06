@@ -1,3 +1,8 @@
+import { eq } from "drizzle-orm";
+import type { Metadata } from "next";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { AlbumsGrid } from "@/components/memorial/albums-grid";
 import { FavoritesSection } from "@/components/memorial/favorites-section";
 import { GuestbookSection } from "@/components/memorial/guestbook-section";
@@ -17,11 +22,6 @@ import {
 import { db } from "@/lib/db";
 import { type FinalSpace, mediaAssets } from "@/lib/db/schema";
 import { getEnrichedFinalSpaceMediaLinks } from "@/lib/media/link-metadata";
-import { eq } from "drizzle-orm";
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -323,7 +323,7 @@ function MemorialBio({ bioText }: MemorialBioProps) {
   }
 
   return (
-    <Card className="bg-transparent border-none ring-0 shadow-none">
+    <Card className="border-none bg-transparent shadow-none ring-0">
       <CardHeader>
         <CardTitle className="text-2xl">About</CardTitle>
       </CardHeader>

@@ -36,6 +36,7 @@ export function AlbumsGrid({ albums, slug }: AlbumsGridProps) {
               className="group relative aspect-4/3 overflow-hidden rounded-xl bg-card shadow-xs ring-1 ring-foreground/10 transition-all hover:shadow-md"
               href={`/m/${slug}/albums/${album.id}`}
               key={album.id}
+              scroll={false}
             >
               {album.coverImageUrl ? (
                 <Image

@@ -81,7 +81,7 @@ export function ImageUploader({
     },
   });
 
-  const handleDrop = useCallback<DragEventHandler<HTMLDivElement>>(
+  const handleDrop = useCallback<DragEventHandler<HTMLElement>>(
     async (e) => {
       e.preventDefault();
       setIsDragging(false);
@@ -137,6 +137,55 @@ export function ImageUploader({
   };
 
   const canUpload = files.length < maxFiles;
+
+  if (variant === "compact") {
+    return (
+      <label
+        className={cn(
+          "flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition-colors",
+          isDragging
+            ? "border-primary bg-primary/5"
+            : "border-muted-foreground/25 hover:border-muted-foreground/50",
+          isUploading && "pointer-events-none opacity-60",
+          !canUpload && "hidden",
+          className
+        )}
+        onDragLeave={() => setIsDragging(false)}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDrop={handleDrop}
+      >
+        {isUploading ? (
+          <div className="flex flex-col items-center gap-1">
+            <Icon
+              className="size-6 animate-spin text-muted-foreground"
+              icon="mdi:loading"
+            />
+            <span className="text-muted-foreground text-xs">
+              {uploadProgress}%
+            </span>
+          </div>
+        ) : (
+          <Icon className="size-6 text-muted-foreground" icon="mdi:plus" />
+        )}
+        <input
+          accept="image/*"
+          className="sr-only"
+          disabled={isUploading || !canUpload}
+          multiple={maxFiles > 1}
+          onChange={handleFileSelect}
+          type="file"
+        />
+        {error && (
+          <p className="absolute -bottom-5 left-0 text-destructive text-xs">
+            {error}
+          </p>
+        )}
+      </label>
+    );
+  }
 
   if (variant === "avatar") {
     return (
@@ -264,7 +313,7 @@ export function ImageUploader({
       {/* Error Message */}
       {error && (
         <div className="flex items-center gap-2 text-destructive text-sm">
-          <Icon className="size-4 flex-shrink-0" icon="mdi:alert-circle" />
+          <Icon className="size-4 shrink-0" icon="mdi:alert-circle" />
           <span>{error}</span>
         </div>
       )}

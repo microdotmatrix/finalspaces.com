@@ -120,14 +120,16 @@ export function AlbumMediaGrid({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Upload Section */}
-      <ImageUploader
-        albumId={albumId}
-        endpoint="albumMedia"
-        finalSpaceId={finalSpaceId}
-        maxFiles={10}
-        onUploadComplete={handleUploadComplete}
-      />
+      {/* Upload Section - full size when no media */}
+      {media.length === 0 && (
+        <ImageUploader
+          albumId={albumId}
+          endpoint="albumMedia"
+          finalSpaceId={finalSpaceId}
+          maxFiles={10}
+          onUploadComplete={handleUploadComplete}
+        />
+      )}
 
       {/* Media Grid */}
       {media.length > 0 ? (
@@ -215,6 +217,16 @@ export function AlbumMediaGrid({
               </div>
             </div>
           ))}
+
+          {/* Compact uploader inline with thumbnails */}
+          <ImageUploader
+            albumId={albumId}
+            endpoint="albumMedia"
+            finalSpaceId={finalSpaceId}
+            maxFiles={10}
+            onUploadComplete={handleUploadComplete}
+            variant="compact"
+          />
         </div>
       ) : (
         <div className="py-8 text-center text-muted-foreground">

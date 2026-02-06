@@ -177,6 +177,17 @@ export function HeaderCarouselEditor({
         </div>
       )}
 
+      {/* Full-size uploader when no images */}
+      {images.length === 0 && albumId && (
+        <ImageUploader
+          albumId={albumId}
+          endpoint="headerCarousel"
+          finalSpaceId={finalSpaceId}
+          maxFiles={MAX_HEADER_IMAGES}
+          onUploadComplete={handleUploadComplete}
+        />
+      )}
+
       {/* Image Thumbnails with Reorder */}
       {images.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -234,19 +245,20 @@ export function HeaderCarouselEditor({
               </div>
             </div>
           ))}
-        </div>
-      )}
 
-      {/* Upload Area */}
-      {canAddMore && albumId && (
-        <ImageUploader
-          albumId={albumId}
-          endpoint="headerCarousel"
-          finalSpaceId={finalSpaceId}
-          maxFiles={MAX_HEADER_IMAGES - images.length}
-          onUploadComplete={handleUploadComplete}
-          variant="compact"
-        />
+          {/* Compact uploader inline with thumbnails */}
+          {canAddMore && albumId && (
+            <ImageUploader
+              albumId={albumId}
+              className="size-20"
+              endpoint="headerCarousel"
+              finalSpaceId={finalSpaceId}
+              maxFiles={MAX_HEADER_IMAGES - images.length}
+              onUploadComplete={handleUploadComplete}
+              variant="compact"
+            />
+          )}
+        </div>
       )}
 
       {/* Count indicator */}

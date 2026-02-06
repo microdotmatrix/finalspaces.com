@@ -1,7 +1,7 @@
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import type { FavoriteType, MemorialFavorite } from "@/lib/db/schema";
-import Image from "next/image";
 
 interface FavoritesSectionProps {
   favorites: MemorialFavorite[];
@@ -42,7 +42,7 @@ export function FavoritesSection({
   });
 
   return (
-    <Card className="bg-transparent border-none ring-0 shadow-none">
+    <Card className="border-none bg-transparent shadow-none ring-0">
       <CardHeader>
         <CardTitle className="text-2xl">Favorites</CardTitle>
       </CardHeader>

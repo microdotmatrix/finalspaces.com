@@ -38,9 +38,13 @@ export function ActionButton({
   }
 
   if (requireAreYouSure) {
+    const { children, ...buttonProps } = props;
+
     return (
       <AlertDialog open={isLoading ? true : undefined}>
-        <AlertDialogTrigger render={(props) => <Button {...props} />} />
+        <AlertDialogTrigger
+          render={<Button {...buttonProps}>{children}</Button>}
+        />
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { ActionButton } from "@/components/elements/action-button";
 import { LifeTimeline } from "@/components/timeline/life-timeline";
 import { TimelineEventForm } from "@/components/timeline/timeline-event-form";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/sheet";
 import {
   autoCreateBirthDeathEvents,
+  deleteTimelineEvent,
   getTimelineCategories,
   getTimelineEventsWithCategories,
   type TimelineCategory,
@@ -33,6 +35,8 @@ export function TimelineStep() {
   const [categories, setCategories] = useState<TimelineCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] =
+    useState<TimelineEventWithCategory | null>(null);
   const [, startTransition] = useTransition();
   const [hasAutoCreated, setHasAutoCreated] = useState(false);
 
@@ -113,7 +117,32 @@ export function TimelineStep() {
 
   const handleEventSuccess = () => {
     setIsSheetOpen(false);
+    setSelectedEvent(null);
     loadData();
+  };
+
+  const handleSheetOpenChange = (isOpen: boolean) => {
+    setIsSheetOpen(isOpen);
+    if (!isOpen) {
+      setSelectedEvent(null);
+    }
+  };
+
+  const handleDeleteEvent = async (
+    event: TimelineEventWithCategory
+  ): Promise<{ error: boolean; message?: string }> => {
+    const result = await deleteTimelineEvent(event.id);
+
+    if (!result.success) {
+      return {
+        error: true,
+        message: result.error,
+      };
+    }
+
+    toast.success("Event deleted");
+    await loadData();
+    return { error: false };
   };
 
   if (!draftId) {
@@ -134,7 +163,7 @@ export function TimelineStep() {
             Complete the previous steps first
           </p>
           <p className="text-muted-foreground text-sm">
-            Timeline events will be available once you&apos;ve started your
+            Timeline events will be available once you've started your
             FinalSpace.
           </p>
         </div>
@@ -151,10 +180,15 @@ export function TimelineStep() {
             Create a visual timeline of their life journey.
           </p>
         </div>
-        <Sheet onOpenChange={setIsSheetOpen} open={isSheetOpen}>
+        <Sheet onOpenChange={handleSheetOpenChange} open={isSheetOpen}>
           <SheetTrigger
             render={
-              <Button size="sm">
+              <Button
+                onClick={() => {
+                  setSelectedEvent(null);
+                }}
+                size="sm"
+              >
                 <Plus className="mr-2 size-4" />
                 Add Event
               </Button>
@@ -162,15 +196,21 @@ export function TimelineStep() {
           />
           <SheetContent className="overflow-y-auto sm:max-w-lg">
             <SheetHeader>
-              <SheetTitle>Add Timeline Event</SheetTitle>
+              <SheetTitle>
+                {selectedEvent ? "Edit Timeline Event" : "Add Timeline Event"}
+              </SheetTitle>
               <SheetDescription>
-                Add a milestone, achievement, or memorable moment.
+                {selectedEvent
+                  ? "Update this timeline event's details."
+                  : "Add a milestone, achievement, or memorable moment."}
               </SheetDescription>
             </SheetHeader>
             <div className="mt-6 px-4">
               <TimelineEventForm
                 categories={categories}
+                event={selectedEvent ?? undefined}
                 finalSpaceId={draftId}
+                key={selectedEvent?.id ?? "new-event"}
                 onSuccess={handleEventSuccess}
               />
             </div>
@@ -186,7 +226,36 @@ export function TimelineStep() {
           />
         </div>
       ) : (
-        <LifeTimeline events={events} />
+        <LifeTimeline
+          events={events}
+          renderEventActions={(event) => (
+            <div className="flex items-center gap-1">
+              <Button
+                onClick={() => {
+                  setSelectedEvent(event);
+                  setIsSheetOpen(true);
+                }}
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              >
+                <Icon className="size-4" icon="mdi:pencil-outline" />
+                <span className="sr-only">Edit event</span>
+              </Button>
+              <ActionButton
+                action={() => handleDeleteEvent(event)}
+                areYouSureDescription={`This will permanently delete "${event.title}" from the timeline.`}
+                requireAreYouSure
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              >
+                <Icon className="size-4" icon="mdi:trash-can-outline" />
+                <span className="sr-only">Delete event</span>
+              </ActionButton>
+            </div>
+          )}
+        />
       )}
 
       {events.length > 0 && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, ChevronDown, Clock, MapPin } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { TimelineEventWithCategory } from "@/lib/actions/timeline-actions";
@@ -12,9 +13,10 @@ import {
 
 interface TimelineEventCardProps {
   event: TimelineEventWithCategory;
+  actions?: ReactNode;
 }
 
-export function TimelineEventCard({ event }: TimelineEventCardProps) {
+export function TimelineEventCard({ event, actions }: TimelineEventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasExpandableContent = !!event.description;
 
@@ -80,23 +82,29 @@ export function TimelineEventCard({ event }: TimelineEventCardProps) {
               )}
             </div>
 
-            {/* Expand button */}
-            {hasExpandableContent && (
-              <button
-                aria-expanded={isExpanded}
-                aria-label={isExpanded ? "Collapse details" : "Expand details"}
-                className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                onClick={() => setIsExpanded(!isExpanded)}
-                type="button"
-              >
-                <ChevronDown
-                  className={cn(
-                    "size-5 transition-transform duration-200",
-                    isExpanded && "rotate-180"
-                  )}
-                />
-              </button>
-            )}
+            <div className="flex shrink-0 items-center gap-1">
+              {actions}
+
+              {/* Expand button */}
+              {hasExpandableContent && (
+                <button
+                  aria-expanded={isExpanded}
+                  aria-label={
+                    isExpanded ? "Collapse details" : "Expand details"
+                  }
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  type="button"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "size-5 transition-transform duration-200",
+                      isExpanded && "rotate-180"
+                    )}
+                  />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Expandable description */}

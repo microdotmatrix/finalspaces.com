@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { TimelineEventWithCategory } from "@/lib/actions/timeline-actions";
 import { groupEventsByYear } from "@/lib/utils/timeline-helpers";
 
@@ -10,11 +11,13 @@ import { TimelineYearMarker } from "./timeline-year-marker";
 interface LifeTimelineProps {
   events: TimelineEventWithCategory[];
   hideHeader?: boolean;
+  renderEventActions?: (event: TimelineEventWithCategory) => ReactNode;
 }
 
 export function LifeTimeline({
   events,
   hideHeader = false,
+  renderEventActions,
 }: LifeTimelineProps) {
   if (events.length === 0) {
     return (
@@ -42,7 +45,11 @@ export function LifeTimeline({
               <TimelineYearMarker year={group.year} />
               <div className="space-y-4 pl-4">
                 {group.events.map((event) => (
-                  <TimelineEventCard event={event} key={event.id} />
+                  <TimelineEventCard
+                    actions={renderEventActions?.(event)}
+                    event={event}
+                    key={event.id}
+                  />
                 ))}
               </div>
             </div>

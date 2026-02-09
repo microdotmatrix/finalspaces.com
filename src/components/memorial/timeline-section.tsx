@@ -1,4 +1,4 @@
-import { LifeTimeline } from "@/components/timeline/life-timeline";
+import { TimelineSectionContent } from "@/components/memorial/timeline-section-content";
 import {
   Card,
   CardAction,
@@ -30,7 +30,7 @@ export async function TimelineSection({ finalSpaceId }: TimelineSectionProps) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <LifeTimeline events={events} hideHeader />
+        <TimelineSectionContent events={events} />
       </CardContent>
     </Card>
   );

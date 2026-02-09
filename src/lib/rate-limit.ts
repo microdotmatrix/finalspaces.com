@@ -1,6 +1,6 @@
 "use server";
 
-import { and, count, eq, gt } from "drizzle-orm";
+import { and, count, eq, gt, lt, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 
 import { db } from "@/lib/db";
@@ -9,6 +9,11 @@ import { rateLimitEvents } from "@/lib/db/schema";
 const RATE_LIMIT_CONFIG = {
   guestbook: { limit: 5, windowMs: 60 * 1000 }, // 5 per minute
   flag: { limit: 3, windowMs: 60 * 60 * 1000 }, // 3 per hour
+  mediaCommentCreate: { limit: 10, windowMs: 60 * 1000 }, // 10 per minute
+  mediaCommentUpdate: { limit: 20, windowMs: 60 * 60 * 1000 }, // 20 per hour
+  mediaCommentDelete: { limit: 20, windowMs: 60 * 60 * 1000 }, // 20 per hour
+  mediaCommentReport: { limit: 10, windowMs: 60 * 60 * 1000 }, // 10 per hour
+  mediaCommentModerate: { limit: 30, windowMs: 60 * 60 * 1000 }, // 30 per hour
 } as const;
 
 type RateLimitAction = keyof typeof RATE_LIMIT_CONFIG;
@@ -74,14 +79,35 @@ export async function checkAndRecordRateLimit(
   ip: string,
   action: RateLimitAction
 ): Promise<boolean> {
-  const limited = await isRateLimited(ip, action);
+  const config = RATE_LIMIT_CONFIG[action];
+  const windowStart = new Date(Date.now() - config.windowMs);
+  const lockKey = `${ip}:${action}`;
 
-  if (limited) {
-    return false;
-  }
+  return await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`);
 
-  await recordRateLimitEvent(ip, action);
-  return true;
+    const [result] = await tx
+      .select({ count: count() })
+      .from(rateLimitEvents)
+      .where(
+        and(
+          eq(rateLimitEvents.ipAddress, ip),
+          eq(rateLimitEvents.action, action),
+          gt(rateLimitEvents.createdAt, windowStart)
+        )
+      );
+
+    if ((result?.count ?? 0) >= config.limit) {
+      return false;
+    }
+
+    await tx.insert(rateLimitEvents).values({
+      ipAddress: ip,
+      action,
+    });
+
+    return true;
+  });
 }
 
 /**
@@ -90,5 +116,5 @@ export async function checkAndRecordRateLimit(
 export async function cleanupRateLimitEvents(): Promise<void> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
 
-  await db.delete(rateLimitEvents).where(gt(rateLimitEvents.createdAt, cutoff));
+  await db.delete(rateLimitEvents).where(lt(rateLimitEvents.createdAt, cutoff));
 }

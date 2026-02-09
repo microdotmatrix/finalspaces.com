@@ -6,7 +6,13 @@ export function TimelineYearMarker({ year }: TimelineYearMarkerProps) {
   return (
     <div className="relative flex items-center gap-4 py-4">
       <div className="shrink-0">
-        <span className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary text-sm">
+        <span
+          className="rounded-full px-3 py-1 font-semibold text-primary text-sm"
+          style={{
+            backgroundColor:
+              "color-mix(in oklab, var(--primary) 5%, var(--background))",
+          }}
+        >
           {year ?? "Unknown"}
         </span>
       </div>

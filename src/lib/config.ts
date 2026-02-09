@@ -18,3 +18,11 @@ export const meta = {
 };
 
 export const MOBILE_BREAKPOINT = 768;
+
+export const features = {
+  mediaCommentsEnabled: true,
+  mediaCommentReportingEnabled: true,
+  timelineMapEnabled: true,
+  timelineMapClusteringEnabled: true,
+  timelineAutoGeocodingEnabled: true,
+} as const;

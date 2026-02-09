@@ -10,6 +10,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -459,16 +460,62 @@ export const mediaComments = pgTable(
     mediaId: uuid("media_id")
       .notNull()
       .references(() => mediaAssets.id, { onDelete: "cascade" }),
+    authorUserId: uuid("author_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     authorName: text("author_name").notNull(),
     commentText: text("comment_text"),
     audioStorageKey: text("audio_storage_key"),
     audioFileName: text("audio_file_name"),
     audioSize: integer("audio_size"),
     audioDurationSec: integer("audio_duration_sec"),
+    moderationStatus: moderationStatusEnum("moderation_status")
+      .notNull()
+      .default("ok"),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+    reportCount: integer("report_count").notNull().default(0),
+    flaggedByUserId: uuid("flagged_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    flaggedAt: timestamp("flagged_at", { withTimezone: true }),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    deletedByUserId: uuid("deleted_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   },
-  (table) => [index("media_comments_media_id_idx").on(table.mediaId)]
+  (table) => [
+    index("media_comments_media_id_idx").on(table.mediaId),
+    index("media_comments_author_user_id_idx").on(table.authorUserId),
+    index("media_comments_moderation_status_idx").on(table.moderationStatus),
+  ]
+);
+
+export const mediaCommentReports = pgTable(
+  "media_comment_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    mediaCommentId: uuid("media_comment_id")
+      .notNull()
+      .references(() => mediaComments.id, { onDelete: "cascade" }),
+    reporterUserId: uuid("reporter_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("media_comment_reports_comment_id_idx").on(table.mediaCommentId),
+    index("media_comment_reports_reporter_user_id_idx").on(
+      table.reporterUserId
+    ),
+    uniqueIndex("media_comment_reports_unique_report_idx").on(
+      table.mediaCommentId,
+      table.reporterUserId
+    ),
+  ]
 );
 
 // Final Space Collaborators
@@ -520,6 +567,21 @@ export const rateLimitEvents = pgTable(
       table.createdAt
     ),
   ]
+);
+
+export const geocodeCache = pgTable(
+  "geocode_cache",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    queryNormalized: text("query_normalized").notNull().unique(),
+    displayName: text("display_name"),
+    latitude: doublePrecision("latitude").notNull(),
+    longitude: doublePrecision("longitude").notNull(),
+    provider: text("provider").notNull().default("nominatim"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [index("geocode_cache_query_idx").on(table.queryNormalized)]
 );
 
 // Family Members
@@ -799,8 +861,10 @@ export const schema = {
   timelineEventMedia,
   guestBookEntries,
   mediaComments,
+  mediaCommentReports,
   finalSpaceCollaborators,
   rateLimitEvents,
+  geocodeCache,
   familyMembers,
   petMemorials,
   petAlbums,
@@ -878,12 +942,46 @@ export const mediaAssetsRelations = relations(mediaAssets, ({ one, many }) => ({
   albumMedia: many(albumMedia),
 }));
 
-export const mediaCommentsRelations = relations(mediaComments, ({ one }) => ({
-  media: one(mediaAssets, {
-    fields: [mediaComments.mediaId],
-    references: [mediaAssets.id],
-  }),
-}));
+export const mediaCommentsRelations = relations(
+  mediaComments,
+  ({ one, many }) => ({
+    media: one(mediaAssets, {
+      fields: [mediaComments.mediaId],
+      references: [mediaAssets.id],
+    }),
+    author: one(users, {
+      fields: [mediaComments.authorUserId],
+      references: [users.id],
+      relationName: "mediaCommentAuthor",
+    }),
+    flaggedBy: one(users, {
+      fields: [mediaComments.flaggedByUserId],
+      references: [users.id],
+      relationName: "mediaCommentFlaggedBy",
+    }),
+    deletedBy: one(users, {
+      fields: [mediaComments.deletedByUserId],
+      references: [users.id],
+      relationName: "mediaCommentDeletedBy",
+    }),
+    reports: many(mediaCommentReports),
+  })
+);
+
+export const mediaCommentReportsRelations = relations(
+  mediaCommentReports,
+  ({ one }) => ({
+    mediaComment: one(mediaComments, {
+      fields: [mediaCommentReports.mediaCommentId],
+      references: [mediaComments.id],
+    }),
+    reporter: one(users, {
+      fields: [mediaCommentReports.reporterUserId],
+      references: [users.id],
+      relationName: "mediaCommentReporter",
+    }),
+  })
+);
 
 export const memorialTemplatesRelations = relations(
   memorialTemplates,
@@ -1452,6 +1550,7 @@ export const insertGuestBookEntrySchema = createInsertSchema(guestBookEntries)
 export const insertMediaCommentSchema = createInsertSchema(mediaComments)
   .pick({
     mediaId: true,
+    authorUserId: true,
     authorName: true,
     commentText: true,
     audioStorageKey: true,
@@ -1461,12 +1560,27 @@ export const insertMediaCommentSchema = createInsertSchema(mediaComments)
   })
   .extend({
     mediaId: z.string().uuid(),
+    authorUserId: z.string().uuid().optional(),
     authorName: z.string().min(1).max(100),
     commentText: z.string().max(2500).optional(),
     audioStorageKey: z.string().optional(),
     audioFileName: z.string().optional(),
     audioSize: z.number().int().max(5_000_000).optional(),
     audioDurationSec: z.number().int().max(120).optional(),
+  });
+
+export const insertMediaCommentReportSchema = createInsertSchema(
+  mediaCommentReports
+)
+  .pick({
+    mediaCommentId: true,
+    reporterUserId: true,
+    reason: true,
+  })
+  .extend({
+    mediaCommentId: z.string().uuid(),
+    reporterUserId: z.string().uuid(),
+    reason: z.string().max(1000).optional(),
   });
 
 export const insertCollaboratorSchema = createInsertSchema(
@@ -1656,6 +1770,10 @@ export type GuestBookEntry = typeof guestBookEntries.$inferSelect;
 export type InsertGuestBookEntry = z.infer<typeof insertGuestBookEntrySchema>;
 export type MediaComment = typeof mediaComments.$inferSelect;
 export type InsertMediaComment = z.infer<typeof insertMediaCommentSchema>;
+export type MediaCommentReport = typeof mediaCommentReports.$inferSelect;
+export type InsertMediaCommentReport = z.infer<
+  typeof insertMediaCommentReportSchema
+>;
 export type FinalSpaceCollaborator =
   typeof finalSpaceCollaborators.$inferSelect;
 export type InsertCollaborator = z.infer<typeof insertCollaboratorSchema>;
@@ -1707,6 +1825,7 @@ export type InsertProfileConnection = z.infer<
   typeof insertProfileConnectionSchema
 >;
 export type ProfileConnection = typeof profileConnections.$inferSelect;
+export type GeocodeCache = typeof geocodeCache.$inferSelect;
 
 // View model for media items as exposed by API
 export interface MediaItemDto {

@@ -1,3 +1,5 @@
+"use client";
+
 import type { TimelineEventWithCategory } from "@/lib/actions/timeline-actions";
 import { groupEventsByYear } from "@/lib/utils/timeline-helpers";
 

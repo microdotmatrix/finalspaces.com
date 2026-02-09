@@ -5,6 +5,9 @@ import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
+import { MediaCommentsPanel } from "@/components/media-comments/media-comments-panel";
+import { features } from "@/lib/config";
+
 interface Photo {
   id: string;
   storageKey: string;
@@ -235,7 +238,7 @@ export function AlbumPhotoGrid({ photos }: AlbumPhotoGridProps) {
                 {/* Photo */}
                 <motion.div
                   animate={{ scale: 1, opacity: 1 }}
-                  className="relative flex max-h-[85vh] max-w-[90vw] flex-col items-center"
+                  className="relative flex max-h-[85vh] max-w-[95vw] flex-col items-center gap-4 lg:flex-row lg:items-start"
                   exit={{ scale: 0.9, opacity: 0 }}
                   initial={{ scale: 0.9, opacity: 0 }}
                   key={activePhoto.id}
@@ -245,21 +248,29 @@ export function AlbumPhotoGrid({ photos }: AlbumPhotoGridProps) {
                     damping: 30,
                   }}
                 >
-                  <Image
-                    alt={activePhoto.title || activePhoto.caption || "Photo"}
-                    className="max-h-[80vh] w-auto rounded-xl object-contain shadow-2xl"
-                    height={1200}
-                    src={getMediaUrl(activePhoto.storageKey)}
-                    width={1200}
-                  />
-                  {activePhoto.caption && (
-                    <p className="mt-3 max-w-lg text-center text-sm text-white/80">
-                      {activePhoto.caption}
+                  <div className="flex max-h-[80vh] flex-col items-center">
+                    <Image
+                      alt={activePhoto.title || activePhoto.caption || "Photo"}
+                      className="max-h-[72vh] w-auto rounded-xl object-contain shadow-2xl"
+                      height={1200}
+                      src={getMediaUrl(activePhoto.storageKey)}
+                      width={1200}
+                    />
+                    {activePhoto.caption && (
+                      <p className="mt-3 max-w-lg text-center text-sm text-white/80">
+                        {activePhoto.caption}
+                      </p>
+                    )}
+                    <p className="mt-1 text-white/50 text-xs">
+                      {lightboxIndex + 1} of {photos.length}
                     </p>
+                  </div>
+
+                  {features.mediaCommentsEnabled && (
+                    <div className="w-full max-w-md lg:max-h-[80vh] lg:w-[360px]">
+                      <MediaCommentsPanel mediaId={activePhoto.id} />
+                    </div>
                   )}
-                  <p className="mt-1 text-white/50 text-xs">
-                    {lightboxIndex + 1} of {photos.length}
-                  </p>
                 </motion.div>
               </Dialog.Popup>
             </Dialog.Portal>

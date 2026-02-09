@@ -92,6 +92,7 @@ export const ImageDialog = ({
             <Dialog.Popup
               className="fixed inset-0 z-101 flex items-center justify-center p-4 outline-none lg:p-8"
               hidden={undefined}
+              onClick={() => setOpen(false)}
             >
               <Dialog.Title className="sr-only">{alt || "Image"}</Dialog.Title>
               <Dialog.Description className="sr-only">
@@ -118,6 +119,7 @@ export const ImageDialog = ({
                   scale: 0.3,
                   opacity: 0,
                 }}
+                onClick={(e) => e.stopPropagation()}
                 transition={{
                   type: "spring",
                   stiffness: 350,

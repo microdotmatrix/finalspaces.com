@@ -1,14 +1,16 @@
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AlbumsGrid } from "@/components/memorial/albums-grid";
 import { FavoritesSection } from "@/components/memorial/favorites-section";
 import { GuestbookSection } from "@/components/memorial/guestbook-section";
-import { HeaderCarousel } from "@/components/memorial/header-carousel";
-import { LocationMapPlaceholder } from "@/components/memorial/location-map-placeholder";
 import { MediaPlaceholder } from "@/components/memorial/media-placeholder";
+import { MemorialHeader } from "@/components/memorial/memorial-header";
+import {
+  getMemorialDisplayName,
+  getMemorialFullName,
+} from "@/components/memorial/memorial-header-utils";
 import { SpotifySection } from "@/components/memorial/spotify-section";
 import { TimelineSection } from "@/components/memorial/timeline-section";
 import { YouTubeSection } from "@/components/memorial/youtube-section";
@@ -20,7 +22,7 @@ import {
   getPublicHeaderCarouselImages,
 } from "@/lib/actions/media-actions";
 import { db } from "@/lib/db";
-import { type FinalSpace, mediaAssets } from "@/lib/db/schema";
+import { mediaAssets } from "@/lib/db/schema";
 import { getEnrichedFinalSpaceMediaLinks } from "@/lib/media/link-metadata";
 
 interface Props {
@@ -37,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const displayName = getDisplayName(space);
+  const displayName = getMemorialDisplayName(space);
 
   // Fetch profile picture URL if profilePictureId exists
   let profileImageUrl: string | null = null;
@@ -90,8 +92,8 @@ export default async function MemorialPage({ params }: Props) {
     getFavorites(space.id),
   ]);
 
-  const displayName = getDisplayName(space);
-  const fullName = getFullName(space);
+  const displayName = getMemorialDisplayName(space);
+  const fullName = getMemorialFullName(space);
 
   // Fetch profile picture URL if profilePictureId exists
   let profilePicture: string | null = null;
@@ -106,33 +108,21 @@ export default async function MemorialPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-background pb-12">
-      {/* Header Carousel */}
-      {headerImages.length > 0 ? (
-        <HeaderCarousel
-          birthDate={space.birthDate}
-          deathDate={space.deathDate}
-          displayName={displayName}
-          fullName={fullName}
-          hometown={space.hometown}
-          images={headerImages}
-          inMemoriam={space.inMemoriam}
-          nickname={space.nickname}
-          profilePicture={profilePicture}
-          useNicknameOnly={space.useNicknameOnly}
-        />
-      ) : (
-        <MemorialHero
-          birthDate={space.birthDate}
-          deathDate={space.deathDate}
-          displayName={displayName}
-          fullName={fullName}
-          inMemoriam={space.inMemoriam}
-          name={space.name}
-          nickname={space.nickname}
-          profilePicture={profilePicture}
-          useNicknameOnly={space.useNicknameOnly}
-        />
-      )}
+      <MemorialHeader
+        identity={{
+          birthDate: space.birthDate,
+          deathDate: space.deathDate,
+          displayName,
+          fallbackName: space.name,
+          fullName,
+          hometown: space.hometown,
+          inMemoriam: space.inMemoriam,
+          nickname: space.nickname,
+          useNicknameOnly: space.useNicknameOnly,
+        }}
+        images={headerImages}
+        profilePicture={profilePicture}
+      />
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
@@ -180,9 +170,6 @@ export default async function MemorialPage({ params }: Props) {
               <TimelineSection finalSpaceId={space.id} />
             </Suspense>
 
-            {/* Location Map Placeholder */}
-            <LocationMapPlaceholder />
-
             <MemorialPlaces
               hometown={space.hometown}
               placeOfBirth={space.placeOfBirth}
@@ -222,97 +209,6 @@ export default async function MemorialPage({ params }: Props) {
   );
 }
 
-function getDisplayName(space: FinalSpace) {
-  return space.useNicknameOnly && space.nickname
-    ? space.nickname
-    : `${space.firstName || ""} ${space.lastName || ""}`.trim();
-}
-
-function getFullName(space: FinalSpace) {
-  return [space.firstName, space.middleName, space.lastName, space.suffix]
-    .filter(Boolean)
-    .join(" ");
-}
-
-interface MemorialHeroProps {
-  displayName: string;
-  name: string;
-  nickname: string | null;
-  useNicknameOnly: boolean;
-  fullName: string;
-  profilePicture: string | null;
-  birthDate: string | null;
-  deathDate: string | null;
-  inMemoriam: boolean;
-}
-
-function MemorialHero({
-  birthDate,
-  deathDate,
-  displayName,
-  fullName,
-  inMemoriam,
-  name,
-  nickname,
-  profilePicture,
-  useNicknameOnly,
-}: MemorialHeroProps) {
-  // Convert storage key to full UploadThing URL
-  const profilePictureUrl = profilePicture
-    ? `https://utfs.io/f/${profilePicture}`
-    : null;
-  return (
-    <section className="relative bg-linear-to-b from-primary/10 to-background py-16 sm:py-24">
-      <div className="container mx-auto px-4 text-center">
-        {profilePictureUrl ? (
-          <div className="relative mx-auto mb-6 size-32 overflow-hidden rounded-full sm:size-40">
-            <Image
-              alt={displayName || name}
-              className="object-cover"
-              fill
-              priority
-              sizes="160px"
-              src={profilePictureUrl}
-            />
-          </div>
-        ) : (
-          <div className="mx-auto mb-6 flex size-32 items-center justify-center rounded-full bg-primary/20 font-bold text-4xl text-primary sm:size-40">
-            {(displayName || name).charAt(0).toUpperCase()}
-          </div>
-        )}
-
-        <h1 className="mb-2 font-bold text-3xl sm:text-4xl lg:text-5xl">
-          {displayName || name}
-        </h1>
-
-        {nickname && !useNicknameOnly && (
-          <p className="mb-2 text-lg text-muted-foreground">
-            &ldquo;{nickname}&rdquo;
-          </p>
-        )}
-
-        {fullName && fullName !== displayName && (
-          <p className="text-muted-foreground">{fullName}</p>
-        )}
-
-        {(birthDate || deathDate) && (
-          <p className="mt-4 text-muted-foreground">
-            {birthDate && <span>{birthDate}</span>}
-            {birthDate && deathDate && <span> — </span>}
-            {deathDate && <span>{deathDate}</span>}
-          </p>
-        )}
-
-        {inMemoriam && (
-          <div className="mt-4 inline-block rounded-full bg-black/80 px-4 py-1 font-medium text-sm text-white">
-            In Loving Memory
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
 interface MemorialBioProps {
   bioText: string | null;
 }
@@ -328,7 +224,7 @@ function MemorialBio({ bioText }: MemorialBioProps) {
         <CardTitle className="text-2xl">About</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="prose prose-lg dark:prose-invert max-w-none">
+        <div className="prose prose-lg dark:prose-invert max-w-none prose-p:text-muted-foreground">
           {bioText.split("\n").map((paragraph) => (
             <p key={`${paragraph}-${paragraph.length}`}>{paragraph}</p>
           ))}

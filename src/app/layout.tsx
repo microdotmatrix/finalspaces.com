@@ -2,7 +2,15 @@ import type { Metadata, Viewport } from "next";
 import { AppContext } from "@/components/context";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { meta } from "@/lib/config";
-import { code, display, sans, serif } from "@/lib/fonts";
+import {
+  clash,
+  code,
+  display,
+  sans,
+  satoshi,
+  serif,
+  supreme,
+} from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -58,6 +66,9 @@ export default function RootLayout({
           sans.variable,
           serif.variable,
           code.variable,
+          clash.variable,
+          satoshi.variable,
+          supreme.variable,
           "antialiased"
         )}
       >

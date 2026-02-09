@@ -65,6 +65,12 @@ export function TimelineEventForm({
 }: TimelineEventFormProps) {
   const [isPending, startTransition] = useTransition();
   const isEditing = !!event;
+  let submitLabel = "Add Event";
+  if (isPending) {
+    submitLabel = isEditing ? "Saving..." : "Adding...";
+  } else if (isEditing) {
+    submitLabel = "Save Changes";
+  }
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = (formEvent) => {
     formEvent.preventDefault();
@@ -98,8 +104,10 @@ export function TimelineEventForm({
     };
 
     startTransition(async () => {
+      const { finalSpaceId: _finalSpaceId, ...updatePayload } = data;
+
       const result = isEditing
-        ? await updateTimelineEvent({ id: event.id, ...data })
+        ? await updateTimelineEvent({ id: event.id, ...updatePayload })
         : await createTimelineEvent(data);
 
       if (result.success) {
@@ -294,13 +302,7 @@ export function TimelineEventForm({
       </div>
 
       <Button disabled={isPending} type="submit">
-        {isPending
-          ? isEditing
-            ? "Saving..."
-            : "Adding..."
-          : isEditing
-            ? "Save Changes"
-            : "Add Event"}
+        {submitLabel}
       </Button>
     </form>
   );

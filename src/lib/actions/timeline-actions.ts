@@ -5,12 +5,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { canEditFinalSpace, requireUser } from "@/lib/auth";
+import { features } from "@/lib/config";
 import { db } from "@/lib/db";
 import {
   finalSpaces,
   timelineCategories,
   timelineEvents,
 } from "@/lib/db/schema";
+import { geocodeLocation } from "@/lib/geocoding/geocode-location";
 
 // ==========================================
 // TYPES & VALIDATION
@@ -82,9 +84,12 @@ const createTimelineEventSchema = z.object({
   isPublic: z.boolean(),
 });
 
-const updateTimelineEventSchema = createTimelineEventSchema.partial().extend({
-  id: z.uuid(),
-});
+const updateTimelineEventSchema = createTimelineEventSchema
+  .omit({ finalSpaceId: true })
+  .partial()
+  .extend({
+    id: z.uuid(),
+  });
 
 export type CreateTimelineEventInput = z.infer<
   typeof createTimelineEventSchema
@@ -156,6 +161,19 @@ export async function createTimelineEvent(
 
   const sortOrder = await getNextSortOrder(data.finalSpaceId);
 
+  let latitude: number | null = null;
+  let longitude: number | null = null;
+  let addToMap = false;
+
+  if (features.timelineAutoGeocodingEnabled && data.location) {
+    const geocoded = await geocodeLocation(data.location);
+    if (geocoded) {
+      latitude = geocoded.latitude;
+      longitude = geocoded.longitude;
+      addToMap = true;
+    }
+  }
+
   const [event] = await db
     .insert(timelineEvents)
     .values({
@@ -172,6 +190,9 @@ export async function createTimelineEvent(
       endDay: data.endDay,
       endYear: data.endYear,
       location: data.location,
+      latitude,
+      longitude,
+      addToMap,
       isPublic: data.isPublic,
       sortOrder,
     })
@@ -203,7 +224,13 @@ export async function updateTimelineEvent(
 
   // Find the event to check ownership
   const [existingEvent] = await db
-    .select({ finalSpaceId: timelineEvents.finalSpaceId })
+    .select({
+      finalSpaceId: timelineEvents.finalSpaceId,
+      location: timelineEvents.location,
+      latitude: timelineEvents.latitude,
+      longitude: timelineEvents.longitude,
+      addToMap: timelineEvents.addToMap,
+    })
     .from(timelineEvents)
     .where(eq(timelineEvents.id, id))
     .limit(1);
@@ -214,9 +241,47 @@ export async function updateTimelineEvent(
 
   await requireTimelineOwnership(user.id, existingEvent.finalSpaceId);
 
+  const updateData: Partial<typeof timelineEvents.$inferInsert> = {
+    ...data,
+  };
+
+  const hasLocationField = Object.hasOwn(data, "location");
+  if (hasLocationField) {
+    const normalizedIncomingLocation =
+      data.location?.trim().toLowerCase() ?? null;
+    const normalizedExistingLocation =
+      existingEvent.location?.trim().toLowerCase() ?? null;
+
+    if (normalizedIncomingLocation) {
+      const locationChanged =
+        normalizedIncomingLocation !== normalizedExistingLocation;
+
+      if (features.timelineAutoGeocodingEnabled && locationChanged) {
+        const geocoded = await geocodeLocation(data.location ?? "");
+        if (geocoded) {
+          updateData.latitude = geocoded.latitude;
+          updateData.longitude = geocoded.longitude;
+          updateData.addToMap = true;
+        } else {
+          updateData.latitude = existingEvent.latitude;
+          updateData.longitude = existingEvent.longitude;
+          updateData.addToMap = existingEvent.addToMap;
+        }
+      } else {
+        updateData.latitude = existingEvent.latitude;
+        updateData.longitude = existingEvent.longitude;
+        updateData.addToMap = existingEvent.addToMap;
+      }
+    } else {
+      updateData.latitude = null;
+      updateData.longitude = null;
+      updateData.addToMap = false;
+    }
+  }
+
   const [event] = await db
     .update(timelineEvents)
-    .set(data)
+    .set(updateData)
     .where(eq(timelineEvents.id, id))
     .returning();
 
@@ -305,6 +370,9 @@ export async function reorderTimelineEvents(
 export async function getTimelineEvents(
   finalSpaceId: string
 ): Promise<TimelineEvent[]> {
+  const user = await requireUser();
+  await requireTimelineOwnership(user.id, finalSpaceId);
+
   return db
     .select()
     .from(timelineEvents)
@@ -340,12 +408,21 @@ export async function getPublicTimelineEvents(
 export async function getTimelineEvent(
   eventId: string
 ): Promise<TimelineEvent | null> {
+  const user = await requireUser();
+
   const [event] = await db
     .select()
     .from(timelineEvents)
     .where(eq(timelineEvents.id, eventId))
     .limit(1);
-  return event ?? null;
+
+  if (!event) {
+    return null;
+  }
+
+  await requireTimelineOwnership(user.id, event.finalSpaceId);
+
+  return event;
 }
 
 /**
@@ -404,6 +481,9 @@ export async function getPublicTimelineEventsWithCategories(
 export async function getTimelineEventsWithCategories(
   finalSpaceId: string
 ): Promise<TimelineEventWithCategory[]> {
+  const user = await requireUser();
+  await requireTimelineOwnership(user.id, finalSpaceId);
+
   const results = await db
     .select({
       event: timelineEvents,

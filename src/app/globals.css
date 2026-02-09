@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+@import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
+@import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 @plugin "@tailwindcss/typography";
 
 .root {
@@ -48,10 +51,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
-
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -77,6 +76,9 @@
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
   --ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
   --ease-in-out-quad: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+
+  --breakpoint-3xl: 120rem;
+  --breakpoint-4xl: 148rem;
 }
 
 .light,
@@ -118,9 +120,7 @@
   --sidebar-accent-foreground: oklch(0.2101 0.0318 264.6645);
   --sidebar-border: oklch(0.9276 0.0058 264.5313);
   --sidebar-ring: oklch(0.6716 0.1368 48.513);
-  --font-sans: Geist Mono, ui-monospace, monospace;
-  --font-serif: serif;
-  --font-mono: JetBrains Mono, monospace;
+
   --radius: 0.75rem;
   --shadow-x: 0px;
   --shadow-y: 1px;
@@ -225,9 +225,7 @@
   --sidebar-accent-foreground: oklch(0.8109 0 0);
   --sidebar-border: oklch(0.252 0 0);
   --sidebar-ring: oklch(0.7214 0.1337 49.9802);
-  --font-sans: Geist Mono, ui-monospace, monospace;
-  --font-serif: serif;
-  --font-mono: JetBrains Mono, monospace;
+
   --radius: 0.75rem;
   --shadow-x: 0px;
   --shadow-y: 1px;
@@ -258,6 +256,22 @@
   }
 }
 
+@layer components {
+  .timeline-map-marker-wrapper {
+    background: transparent;
+    border: none;
+  }
+
+  .timeline-map-marker {
+    display: block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid white;
+    border-radius: 9999px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+  }
+}
+
 @layer all {
   html {
     scrollbar-gutter: stable;
@@ -275,6 +289,8 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--background);
     letter-spacing: var(--tracking-normal);
+    font-family: var(--font-sans);
+    font-weight: 400;
   }
 
   html::-webkit-scrollbar {
@@ -320,6 +336,13 @@
     height: 100%;
     max-height: 44px;
     max-width: 44px;
+  }
+}
+
+@layer base {
+  :where(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-clash);
+    font-weight: 400;
   }
 }
 

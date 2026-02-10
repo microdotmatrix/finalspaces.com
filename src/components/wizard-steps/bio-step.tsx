@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -36,22 +36,19 @@ export function BioStep() {
     return () => clearTimeout(timeout);
   }, [bioText, lifeHighlights, quotes, setWizardData]);
 
-  const addQuote = useCallback(() => {
+  const addQuote = () => {
     setQuotes((prev) => [...prev, { text: "", author: "" }]);
-  }, []);
+  };
 
-  const removeQuote = useCallback((index: number) => {
+  const removeQuote = (index: number) => {
     setQuotes((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  };
 
-  const updateQuote = useCallback(
-    (index: number, field: keyof Quote, value: string) => {
-      setQuotes((prev) =>
-        prev.map((q, i) => (i === index ? { ...q, [field]: value } : q))
-      );
-    },
-    []
-  );
+  const updateQuote = (index: number, field: keyof Quote, value: string) => {
+    setQuotes((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, [field]: value } : q))
+    );
+  };
 
   return (
     <div className="space-y-8">

@@ -3,7 +3,7 @@
 import { SignInButton, useAuth } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
 import { Flag, MessageSquare, Pencil, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,23 +34,40 @@ export function MediaCommentsPanel({ mediaId }: MediaCommentsPanelProps) {
   const [editingDraft, setEditingDraft] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const loadComments = useCallback(async () => {
-    setIsLoading(true);
-    const result = await getMediaComments({ mediaId });
-    if (result.success) {
-      setComments(result.data);
-    } else {
-      toast.error(result.error);
-    }
-    setIsLoading(false);
-  }, [mediaId]);
-
   useEffect(() => {
-    loadComments().catch(() => {
-      toast.error("Failed to load comments");
-      setIsLoading(false);
-    });
-  }, [loadComments]);
+    let isCancelled = false;
+
+    const loadComments = async () => {
+      setIsLoading(true);
+      try {
+        const result = await getMediaComments({ mediaId });
+
+        if (isCancelled) {
+          return;
+        }
+
+        if (result.success) {
+          setComments(result.data);
+        } else {
+          toast.error(result.error);
+        }
+      } catch {
+        if (!isCancelled) {
+          toast.error("Failed to load comments");
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadComments();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [mediaId]);
 
   const hasComments = comments.length > 0;
 

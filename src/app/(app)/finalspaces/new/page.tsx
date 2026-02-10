@@ -4,7 +4,7 @@ import { useAtom } from "jotai";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback } from "react";
+import { Suspense } from "react";
 
 import { Icon } from "@/components/ui/icon";
 import { SaveStatusIndicator } from "@/components/wizard/save-status-indicator";
@@ -53,28 +53,25 @@ function WizardContent() {
   const currentStep = WIZARD_STEPS[validStepIndex];
 
   // Navigation handlers
-  const navigateToStep = useCallback(
-    (stepKey: string) => {
-      const step = WIZARD_STEPS.find((s) => s.key === stepKey);
-      if (step) {
-        setCurrentStep(step.id);
-        router.push(`/finalspaces/new?step=${stepKey}`);
-      }
-    },
-    [router, setCurrentStep]
-  );
+  const navigateToStep = (stepKey: string) => {
+    const step = WIZARD_STEPS.find((s) => s.key === stepKey);
+    if (step) {
+      setCurrentStep(step.id);
+      router.push(`/finalspaces/new?step=${stepKey}`);
+    }
+  };
 
-  const handlePrev = useCallback(() => {
+  const handlePrev = () => {
     if (validStepIndex > 0) {
       navigateToStep(WIZARD_STEPS[validStepIndex - 1].key);
     }
-  }, [validStepIndex, navigateToStep]);
+  };
 
-  const handleNext = useCallback(() => {
+  const handleNext = () => {
     if (validStepIndex < WIZARD_STEPS.length - 1) {
       navigateToStep(WIZARD_STEPS[validStepIndex + 1].key);
     }
-  }, [validStepIndex, navigateToStep]);
+  };
 
   // Render current step component
   const StepComponent =

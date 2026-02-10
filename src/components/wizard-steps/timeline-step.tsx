@@ -2,7 +2,7 @@
 
 import { useAtom } from "jotai";
 import { Plus } from "lucide-react";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { ActionButton } from "@/components/elements/action-button";
@@ -28,6 +28,15 @@ import {
 } from "@/lib/actions/timeline-actions";
 import { draftIdAtom, wizardDataAtom } from "@/lib/stores/wizard-state";
 
+async function fetchTimelineData(draftId: string) {
+  const [eventsData, categoriesData] = await Promise.all([
+    getTimelineEventsWithCategories(draftId),
+    getTimelineCategories(),
+  ]);
+
+  return { categoriesData, eventsData };
+}
+
 export function TimelineStep() {
   const [draftId] = useAtom(draftIdAtom);
   const [wizardData] = useAtom(wizardDataAtom);
@@ -46,7 +55,7 @@ export function TimelineStep() {
       : `${wizardData.firstName || ""} ${wizardData.lastName || ""}`.trim() ||
         wizardData.name;
 
-  const loadData = useCallback(async () => {
+  const refreshData = async () => {
     if (!draftId) {
       setIsLoading(false);
       return;
@@ -54,10 +63,7 @@ export function TimelineStep() {
 
     setIsLoading(true);
     try {
-      const [eventsData, categoriesData] = await Promise.all([
-        getTimelineEventsWithCategories(draftId),
-        getTimelineCategories(),
-      ]);
+      const { categoriesData, eventsData } = await fetchTimelineData(draftId);
       setEvents(eventsData);
       setCategories(categoriesData);
     } catch (error) {
@@ -66,11 +72,42 @@ export function TimelineStep() {
     } finally {
       setIsLoading(false);
     }
-  }, [draftId]);
+  };
 
   useEffect(() => {
+    if (!draftId) {
+      setIsLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const { categoriesData, eventsData } = await fetchTimelineData(draftId);
+        if (!isCancelled) {
+          setEvents(eventsData);
+          setCategories(categoriesData);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Failed to load timeline data:", error);
+          toast.error("Failed to load timeline events");
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     loadData();
-  }, [loadData]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [draftId]);
 
   // Auto-create birth/death events once when dates exist and no birth event yet
   useEffect(() => {
@@ -95,7 +132,10 @@ export function TimelineStep() {
             wizardData.placeOfBirth || null
           );
           setHasAutoCreated(true);
-          await loadData();
+          const { categoriesData, eventsData } =
+            await fetchTimelineData(draftId);
+          setEvents(eventsData);
+          setCategories(categoriesData);
         } catch (error) {
           console.error("Failed to auto-create events:", error);
         }
@@ -112,13 +152,12 @@ export function TimelineStep() {
     wizardData.deathDate,
     wizardData.placeOfBirth,
     displayName,
-    loadData,
   ]);
 
   const handleEventSuccess = () => {
     setIsSheetOpen(false);
     setSelectedEvent(null);
-    loadData();
+    refreshData();
   };
 
   const handleSheetOpenChange = (isOpen: boolean) => {
@@ -141,7 +180,7 @@ export function TimelineStep() {
     }
 
     toast.success("Event deleted");
-    await loadData();
+    await refreshData();
     return { error: false };
   };
 

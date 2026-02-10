@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { FamilyTreeTabContent } from "@/components/memorial/family-tree-tab-content";
 import { LifeTimeline } from "@/components/timeline/life-timeline";
@@ -59,10 +59,7 @@ export function TimelineSectionContent({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const activeTabFromQuery = useMemo(
-    () => resolveTab(searchParams.get("tab"), mapEnabled),
-    [searchParams]
-  );
+  const activeTabFromQuery = resolveTab(searchParams.get("tab"), mapEnabled);
 
   const [activeTab, setActiveTab] = useState<TimelineTab>(activeTabFromQuery);
 
@@ -70,35 +67,29 @@ export function TimelineSectionContent({
     setActiveTab(activeTabFromQuery);
   }, [activeTabFromQuery]);
 
-  const updateTabQuery = useCallback(
-    (nextTab: TimelineTab) => {
-      const params = new URLSearchParams(searchParams.toString());
+  const updateTabQuery = (nextTab: TimelineTab) => {
+    const params = new URLSearchParams(searchParams.toString());
 
-      if (nextTab === "timeline") {
-        params.delete("tab");
-      } else {
-        params.set("tab", nextTab);
-      }
+    if (nextTab === "timeline") {
+      params.delete("tab");
+    } else {
+      params.set("tab", nextTab);
+    }
 
-      const queryString = params.toString();
-      const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
-      router.replace(nextUrl, { scroll: false });
-    },
-    [pathname, router, searchParams]
-  );
+    const queryString = params.toString();
+    const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  };
 
-  const handleTabChange = useCallback(
-    (value: string | number | null) => {
-      if (typeof value !== "string") {
-        return;
-      }
+  const handleTabChange = (value: string | number | null) => {
+    if (typeof value !== "string") {
+      return;
+    }
 
-      const resolvedTab = resolveTab(value, mapEnabled);
-      setActiveTab(resolvedTab);
-      updateTabQuery(resolvedTab);
-    },
-    [updateTabQuery]
-  );
+    const resolvedTab = resolveTab(value, mapEnabled);
+    setActiveTab(resolvedTab);
+    updateTabQuery(resolvedTab);
+  };
 
   return (
     <Tabs onValueChange={handleTabChange} value={activeTab}>

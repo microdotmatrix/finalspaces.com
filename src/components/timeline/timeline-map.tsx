@@ -2,7 +2,7 @@
 
 import L from "leaflet";
 import { MapPin } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
@@ -40,47 +40,40 @@ interface TimelineMapProps {
 export function TimelineMap({ events }: TimelineMapProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const allMappableEvents = useMemo(() => {
-    return events.filter((event) => {
-      if (!event.addToMap) {
-        return false;
-      }
+  const allMappableEvents = events.filter((event) => {
+    if (!event.addToMap) {
+      return false;
+    }
 
-      if (
-        typeof event.latitude !== "number" ||
-        typeof event.longitude !== "number"
-      ) {
-        return false;
-      }
-      return true;
+    if (
+      typeof event.latitude !== "number" ||
+      typeof event.longitude !== "number"
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  const mappableEvents =
+    selectedCategory === "all"
+      ? allMappableEvents
+      : allMappableEvents.filter(
+          (event) => event.category?.id === selectedCategory
+        );
+
+  const map = new Map<string, { id: string; name: string }>();
+  for (const event of events) {
+    if (!(event.category?.id && event.category.name)) {
+      continue;
+    }
+    map.set(event.category.id, {
+      id: event.category.id,
+      name: event.category.name,
     });
-  }, [events]);
+  }
+  const categories = Array.from(map.values());
 
-  const mappableEvents = useMemo(() => {
-    if (selectedCategory === "all") {
-      return allMappableEvents;
-    }
-
-    return allMappableEvents.filter(
-      (event) => event.category?.id === selectedCategory
-    );
-  }, [allMappableEvents, selectedCategory]);
-
-  const categories = useMemo(() => {
-    const map = new Map<string, { id: string; name: string }>();
-    for (const event of events) {
-      if (!(event.category?.id && event.category.name)) {
-        continue;
-      }
-      map.set(event.category.id, {
-        id: event.category.id,
-        name: event.category.name,
-      });
-    }
-    return Array.from(map.values());
-  }, [events]);
-
-  const center = useMemo<[number, number]>(() => {
+  const center: [number, number] = (() => {
     if (allMappableEvents.length === 0) {
       return FALLBACK_CENTER;
     }
@@ -90,7 +83,7 @@ export function TimelineMap({ events }: TimelineMapProps) {
       first.latitude ?? FALLBACK_CENTER[0],
       first.longitude ?? FALLBACK_CENTER[1],
     ];
-  }, [allMappableEvents, mappableEvents]);
+  })();
 
   if (events.length === 0 || allMappableEvents.length === 0) {
     return (

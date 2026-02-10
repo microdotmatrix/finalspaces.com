@@ -4,7 +4,6 @@ import { MonitorIcon, MoonStarIcon, SunIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import type { JSX } from "react";
-import { useCallback } from "react";
 
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { useMetaColor } from "@/hooks/use-meta-color";
@@ -72,18 +71,15 @@ function ThemeSwitcher() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { setMetaColor } = useMetaColor();
 
-  const cycleTheme = useCallback(
-    (value: string) => {
-      setTheme(value);
+  const cycleTheme = (value: string) => {
+    setTheme(value);
 
-      // For system theme, use the resolved theme to determine meta color
-      const effectiveTheme = value === "system" ? resolvedTheme : value;
-      setMetaColor(
-        effectiveTheme === "dark" ? meta.colors.dark : meta.colors.light
-      );
-    },
-    [resolvedTheme, setTheme, setMetaColor]
-  );
+    // For system theme, use the resolved theme to determine meta color
+    const effectiveTheme = value === "system" ? resolvedTheme : value;
+    setMetaColor(
+      effectiveTheme === "dark" ? meta.colors.dark : meta.colors.light
+    );
+  };
 
   const isMounted = useIsHydrated();
 

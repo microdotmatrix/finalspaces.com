@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -189,13 +188,10 @@ export function FamilyTreeCanvas({
   onSelectMember,
   onAddRelative,
 }: FamilyTreeCanvasProps) {
-  const generationGroups = useMemo(() => groupByGeneration(members), [members]);
+  const generationGroups = groupByGeneration(members);
 
   // Sort generations from ancestors (negative) to descendants (positive)
-  const sortedGenerations = useMemo(
-    () => [...generationGroups.keys()].sort((a, b) => a - b),
-    [generationGroups]
-  );
+  const sortedGenerations = [...generationGroups.keys()].sort((a, b) => a - b);
 
   // Split into ancestors, same generation, and descendants
   const ancestors = sortedGenerations.filter((g) => g < 0);

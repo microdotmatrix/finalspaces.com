@@ -4,7 +4,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import type { DetailedHTMLProps, ImgHTMLAttributes } from "react";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 interface OriginPosition {
   x: number;
@@ -23,7 +23,7 @@ export const ImageDialog = ({
   const [origin, setOrigin] = useState<OriginPosition | null>(null);
   const thumbnailRef = useRef<HTMLDivElement>(null);
 
-  const handleOpen = useCallback(() => {
+  const handleOpen = () => {
     if (thumbnailRef.current) {
       const rect = thumbnailRef.current.getBoundingClientRect();
       const viewportCenterX = window.innerWidth / 2;
@@ -37,7 +37,7 @@ export const ImageDialog = ({
       });
     }
     setOpen(true);
-  }, []);
+  };
 
   if (!src) return null;
 

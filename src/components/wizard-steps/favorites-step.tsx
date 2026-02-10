@@ -5,9 +5,7 @@ import Image from "next/image";
 import {
   type ChangeEvent,
   type ReactNode,
-  useCallback,
   useEffect,
-  useMemo,
   useState,
   useTransition,
 } from "react";
@@ -376,12 +374,8 @@ export function FavoritesStep() {
     };
   }, [searchQuery, selectedCategory]);
 
-  const favoriteTypesByKey = useMemo(
-    () =>
-      new Map<FavoriteCategory, FavoriteType>(
-        favoriteTypes.map((type) => [type.key as FavoriteCategory, type])
-      ),
-    [favoriteTypes]
+  const favoriteTypesByKey = new Map<FavoriteCategory, FavoriteType>(
+    favoriteTypes.map((type) => [type.key as FavoriteCategory, type])
   );
 
   const currentTypeId = favoriteTypesByKey.get(selectedCategory)?.id ?? null;
@@ -399,50 +393,47 @@ export function FavoritesStep() {
   };
 
   // Add favorite handler
-  const handleAdd = useCallback(
-    (result: SearchResult) => {
-      if (!finalSpaceId) {
-        return;
-      }
+  const handleAdd = (result: SearchResult) => {
+    if (!finalSpaceId) {
+      return;
+    }
 
-      if (!currentTypeId) {
-        toast.error("Category not configured");
-        return;
-      }
+    if (!currentTypeId) {
+      toast.error("Category not configured");
+      return;
+    }
 
-      setAddingId(result.id);
-      startTransition(async () => {
-        try {
-          const response = await addFavorite({
-            finalSpaceId,
-            favoriteTypeId: currentTypeId,
-            title: result.title,
-            subtitle: result.subtitle,
-            imageUrl: result.imageUrl,
-            externalUrl: result.externalUrl,
-            apiId: result.id,
-          });
+    setAddingId(result.id);
+    startTransition(async () => {
+      try {
+        const response = await addFavorite({
+          finalSpaceId,
+          favoriteTypeId: currentTypeId,
+          title: result.title,
+          subtitle: result.subtitle,
+          imageUrl: result.imageUrl,
+          externalUrl: result.externalUrl,
+          apiId: result.id,
+        });
 
-          if (response.success && response.favorite) {
-            const newFavorite = response.favorite;
-            setFavorites((prev) => [...prev, newFavorite]);
-            setRecentlyAdded((prev) => new Set([...prev, result.id]));
-            toast.success(`Added "${result.title}" to favorites`);
-          } else {
-            toast.error(response.error ?? "Failed to add favorite");
-          }
-        } catch {
-          toast.error("An unexpected error occurred");
-        } finally {
-          setAddingId(null);
+        if (response.success && response.favorite) {
+          const newFavorite = response.favorite;
+          setFavorites((prev) => [...prev, newFavorite]);
+          setRecentlyAdded((prev) => new Set([...prev, result.id]));
+          toast.success(`Added "${result.title}" to favorites`);
+        } else {
+          toast.error(response.error ?? "Failed to add favorite");
         }
-      });
-    },
-    [currentTypeId, finalSpaceId]
-  );
+      } catch {
+        toast.error("An unexpected error occurred");
+      } finally {
+        setAddingId(null);
+      }
+    });
+  };
 
   // Remove favorite handler
-  const handleRemove = useCallback((favorite: MemorialFavorite) => {
+  const handleRemove = (favorite: MemorialFavorite) => {
     setRemovingId(favorite.id);
     startTransition(async () => {
       try {
@@ -460,23 +451,21 @@ export function FavoritesStep() {
         setRemovingId(null);
       }
     });
-  }, []);
+  };
 
-  const favoritesByType = useMemo(() => {
-    return favorites.reduce(
-      (acc, fav) => {
-        const typeId = fav.favoriteTypeId;
-        if (typeId) {
-          if (!acc[typeId]) {
-            acc[typeId] = [];
-          }
-          acc[typeId].push(fav);
+  const favoritesByType = favorites.reduce(
+    (acc, fav) => {
+      const typeId = fav.favoriteTypeId;
+      if (typeId) {
+        if (!acc[typeId]) {
+          acc[typeId] = [];
         }
-        return acc;
-      },
-      {} as Record<string, MemorialFavorite[]>
-    );
-  }, [favorites]);
+        acc[typeId].push(fav);
+      }
+      return acc;
+    },
+    {} as Record<string, MemorialFavorite[]>
+  );
 
   if (!finalSpaceId) {
     return (

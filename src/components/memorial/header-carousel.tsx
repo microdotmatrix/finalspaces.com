@@ -4,7 +4,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,28 +35,24 @@ export function HeaderCarousel({
 
   const displayName = identity.displayName || identity.fallbackName;
 
-  const onSelect = useCallback(() => {
-    if (!emblaApi) {
-      return;
-    }
-
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-    setCurrentIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
-
   useEffect(() => {
     if (!emblaApi) {
       return;
     }
 
-    onSelect();
-    emblaApi.on("select", onSelect);
+    const handleSelect = () => {
+      setCanScrollPrev(emblaApi.canScrollPrev());
+      setCanScrollNext(emblaApi.canScrollNext());
+      setCurrentIndex(emblaApi.selectedScrollSnap());
+    };
+
+    handleSelect();
+    emblaApi.on("select", handleSelect);
 
     return () => {
-      emblaApi.off("select", onSelect);
+      emblaApi.off("select", handleSelect);
     };
-  }, [emblaApi, onSelect]);
+  }, [emblaApi]);
 
   if (images.length === 0) {
     return null;

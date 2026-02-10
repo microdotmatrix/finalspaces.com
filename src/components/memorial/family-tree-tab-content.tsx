@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -63,7 +63,7 @@ function FamilyMemberNode({ member }: FamilyMemberNodeProps) {
   const memberYears = getMemberYears(member);
 
   return (
-    <div className="flex w-40 flex-col items-center rounded-xl border bg-card p-3 text-center shadow-sm">
+    <div className="flex flex-col items-center rounded-xl border-2 border-border bg-card p-3 shadow-sm transition-all">
       <div className="relative mb-2 size-12 overflow-hidden rounded-lg bg-muted">
         {member.photoUrl ? (
           <Image
@@ -80,8 +80,10 @@ function FamilyMemberNode({ member }: FamilyMemberNodeProps) {
         )}
       </div>
 
-      <p className="w-full truncate font-medium text-sm">{displayName}</p>
-      <p className="w-full truncate text-muted-foreground text-xs">
+      <p className="max-w-24 truncate text-center font-medium text-xs">
+        {displayName}
+      </p>
+      <p className="max-w-24 truncate text-center text-muted-foreground text-xs">
         {member.relationship}
       </p>
       {memberYears && (
@@ -102,7 +104,7 @@ function GenerationRow({ generationLevel, members }: GenerationRowProps) {
       <p className="text-muted-foreground text-xs uppercase tracking-wider">
         {getGenerationLabel(generationLevel)}
       </p>
-      <div className="flex flex-wrap items-start justify-center gap-3">
+      <div className="flex flex-wrap items-end justify-center gap-4">
         {members.map((member) => (
           <FamilyMemberNode key={member.id} member={member} />
         ))}
@@ -117,10 +119,7 @@ interface FamilyGraphViewProps {
 }
 
 function FamilyGraphView({ members, subjectName }: FamilyGraphViewProps) {
-  const generationGroups = useMemo(
-    () => groupFamilyMembersByGeneration(members),
-    [members]
-  );
+  const generationGroups = groupFamilyMembersByGeneration(members);
 
   const ancestors = generationGroups.filter(
     (group) => group.generationLevel < 0
@@ -131,6 +130,8 @@ function FamilyGraphView({ members, subjectName }: FamilyGraphViewProps) {
   const descendants = generationGroups.filter(
     (group) => group.generationLevel > 0
   );
+
+  const hasSameGen = sameGeneration && sameGeneration.members.length > 0;
 
   return (
     <div className="min-h-96 w-full overflow-auto rounded-xl border bg-muted/30 p-6">
@@ -144,31 +145,43 @@ function FamilyGraphView({ members, subjectName }: FamilyGraphViewProps) {
         ))}
 
         {ancestors.length > 0 && (
-          <div aria-hidden="true" className="h-6 w-0.5 bg-border" />
+          <div aria-hidden="true" className="h-8 w-0.5 bg-border" />
         )}
 
+        {/* Subject node with same-generation relatives inline */}
         <div className="flex flex-col items-center gap-2">
           <p className="text-muted-foreground text-xs uppercase tracking-wider">
-            Memorial Subject
+            {hasSameGen ? "Same Generation" : "Memorial Subject"}
           </p>
-          <div className="flex w-40 flex-col items-center rounded-xl border-2 border-primary bg-primary/5 p-3 text-center shadow-sm">
-            <div className="mb-2 flex size-12 items-center justify-center rounded-lg bg-primary/10">
-              <Icon className="size-6 text-primary" icon="ph:star-fill" />
+          <div className="relative flex items-end justify-center">
+            {/* Subject node - always centered, larger than others */}
+            <div className="flex flex-col items-center rounded-xl border-2 border-primary bg-primary/5 p-3 shadow-sm">
+              <div className="relative mb-2 size-16 overflow-hidden rounded-lg bg-primary/10">
+                <div className="flex size-full items-center justify-center">
+                  <Icon className="size-8 text-primary" icon="ph:star-fill" />
+                </div>
+              </div>
+              <p className="max-w-24 truncate text-center font-medium text-sm">
+                {subjectName}
+              </p>
+              <p className="text-center text-muted-foreground text-xs">
+                Subject
+              </p>
             </div>
-            <p className="w-full truncate font-medium text-sm">{subjectName}</p>
-            <p className="text-muted-foreground text-xs">Subject</p>
+
+            {/* Same generation members positioned to the right */}
+            {hasSameGen && (
+              <div className="absolute left-full ml-4 flex items-end gap-4">
+                {sameGeneration.members.map((member) => (
+                  <FamilyMemberNode key={member.id} member={member} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {sameGeneration && sameGeneration.members.length > 0 && (
-          <GenerationRow
-            generationLevel={sameGeneration.generationLevel}
-            members={sameGeneration.members}
-          />
-        )}
-
         {descendants.length > 0 && (
-          <div aria-hidden="true" className="h-6 w-0.5 bg-border" />
+          <div aria-hidden="true" className="h-8 w-0.5 bg-border" />
         )}
 
         {descendants.map((group) => (
@@ -192,10 +205,7 @@ function FamilyCollapsibleView({
   members,
   subjectName,
 }: FamilyCollapsibleViewProps) {
-  const generationGroups = useMemo(
-    () => groupFamilyMembersByGeneration(members),
-    [members]
-  );
+  const generationGroups = groupFamilyMembersByGeneration(members);
 
   return (
     <ScrollArea className="h-[420px] rounded-xl border bg-muted/20">
@@ -289,9 +299,10 @@ export function FamilyTreeTabContent({
     setViewMode(isMobileViewport ? "collapsible" : "graph");
   }, []);
 
-  const filteredMembers = useMemo(
-    () => filterFamilyMembers(familyMembers, granularity, focus),
-    [familyMembers, granularity, focus]
+  const filteredMembers = filterFamilyMembers(
+    familyMembers,
+    granularity,
+    focus
   );
 
   const editFamilyTreeHref = `/finalspaces/${finalSpaceId}/edit?tab=family`;

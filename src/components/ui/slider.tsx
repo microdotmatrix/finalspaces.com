@@ -1,7 +1,6 @@
 "use client";
 
 import { Slider as SliderPrimitive } from "@base-ui/react/slider";
-import { useMemo } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -13,17 +12,13 @@ function Slider({
   max = 100,
   ...props
 }: SliderPrimitive.Root.Props) {
-  const _values = useMemo(() => {
-    if (Array.isArray(value)) {
-      return value;
-    }
+  let _values = [min, max];
 
-    if (Array.isArray(defaultValue)) {
-      return defaultValue;
-    }
-
-    return [min, max];
-  }, [value, defaultValue, min, max]);
+  if (Array.isArray(value)) {
+    _values = value;
+  } else if (Array.isArray(defaultValue)) {
+    _values = defaultValue;
+  }
 
   return (
     <SliderPrimitive.Root

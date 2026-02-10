@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -73,55 +73,53 @@ export function SocialStep() {
   }, [youtubeLinks, spotifyLinks, socialLinks, setWizardData]);
 
   // YouTube handlers
-  const addYoutube = useCallback(() => {
+  const addYoutube = () => {
     setYoutubeLinks((prev) => [
       ...prev,
       { id: generateUUID(), url: "", title: "" },
     ]);
-  }, []);
+  };
 
-  const removeYoutube = useCallback((index: number) => {
+  const removeYoutube = (index: number) => {
     setYoutubeLinks((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  };
 
-  const updateYoutube = useCallback(
-    (index: number, field: keyof LinkItem, value: string) => {
-      setYoutubeLinks((prev) =>
-        prev.map((item, i) =>
-          i === index ? { ...item, [field]: value } : item
-        )
-      );
-    },
-    []
-  );
+  const updateYoutube = (
+    index: number,
+    field: keyof LinkItem,
+    value: string
+  ) => {
+    setYoutubeLinks((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
 
   // Spotify handlers
-  const addSpotify = useCallback(() => {
+  const addSpotify = () => {
     setSpotifyLinks((prev) => [
       ...prev,
       { id: generateUUID(), url: "", title: "" },
     ]);
-  }, []);
+  };
 
-  const removeSpotify = useCallback((index: number) => {
+  const removeSpotify = (index: number) => {
     setSpotifyLinks((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  };
 
-  const updateSpotify = useCallback(
-    (index: number, field: keyof LinkItem, value: string) => {
-      setSpotifyLinks((prev) =>
-        prev.map((item, i) =>
-          i === index ? { ...item, [field]: value } : item
-        )
-      );
-    },
-    []
-  );
+  const updateSpotify = (
+    index: number,
+    field: keyof LinkItem,
+    value: string
+  ) => {
+    setSpotifyLinks((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
 
   // Social links handler
-  const updateSocialLink = useCallback((platform: string, value: string) => {
+  const updateSocialLink = (platform: string, value: string) => {
     setSocialLinks((prev) => ({ ...prev, [platform]: value }));
-  }, []);
+  };
 
   return (
     <div className="space-y-8">

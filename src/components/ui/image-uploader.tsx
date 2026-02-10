@@ -4,7 +4,6 @@ import Image from "next/image";
 import {
   type ChangeEventHandler,
   type DragEventHandler,
-  useCallback,
   useState,
 } from "react";
 import { Icon } from "@/components/ui/icon";
@@ -85,34 +84,31 @@ export function ImageUploader({
     },
   });
 
-  const handleDrop = useCallback<DragEventHandler<HTMLElement>>(
-    async (e) => {
-      e.preventDefault();
-      setIsDragging(false);
+  const handleDrop: DragEventHandler<HTMLElement> = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
 
-      if (files.length >= maxFiles) {
-        setError(`Maximum ${maxFiles} file(s) allowed`);
-        return;
-      }
+    if (files.length >= maxFiles) {
+      setError(`Maximum ${maxFiles} file(s) allowed`);
+      return;
+    }
 
-      const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
-        file.type.startsWith("image/")
-      );
+    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/")
+    );
 
-      if (droppedFiles.length === 0) {
-        setError("Please upload image files only");
-        return;
-      }
+    if (droppedFiles.length === 0) {
+      setError("Please upload image files only");
+      return;
+    }
 
-      const remainingSlots = maxFiles - files.length;
-      const filesToUpload = droppedFiles.slice(0, remainingSlots);
+    const remainingSlots = maxFiles - files.length;
+    const filesToUpload = droppedFiles.slice(0, remainingSlots);
 
-      setIsUploading(true);
-      setError(null);
-      await startUpload(filesToUpload);
-    },
-    [files.length, maxFiles, startUpload]
-  );
+    setIsUploading(true);
+    setError(null);
+    await startUpload(filesToUpload);
+  };
 
   const handleFileSelect: ChangeEventHandler<HTMLInputElement> = async (e) => {
     const selectedFiles = Array.from(e.target.files || []);

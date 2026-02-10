@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { EmptyFamilyState } from "@/components/family-tree/empty-family-state";
@@ -114,56 +114,54 @@ export function FamilyStep() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const handleAddMember = useCallback(
-    (data: Omit<CreateFamilyMemberInput, "finalSpaceId">) => {
-      if (!finalSpaceId) {
-        return;
-      }
+  const handleAddMember = (
+    data: Omit<CreateFamilyMemberInput, "finalSpaceId">
+  ) => {
+    if (!finalSpaceId) {
+      return;
+    }
 
-      startTransition(async () => {
-        const result = await createFamilyMember({
-          ...data,
-          finalSpaceId,
-        });
-
-        if (result.success) {
-          setMembers((prev) => [...prev, result.data]);
-          toast.success("Family member added");
-        } else {
-          toast.error(result.error);
-        }
+    startTransition(async () => {
+      const result = await createFamilyMember({
+        ...data,
+        finalSpaceId,
       });
-    },
-    [finalSpaceId]
-  );
 
-  const handleUpdateMember = useCallback(
-    (data: Omit<CreateFamilyMemberInput, "finalSpaceId">) => {
-      if (!editingMember) {
-        return;
+      if (result.success) {
+        setMembers((prev) => [...prev, result.data]);
+        toast.success("Family member added");
+      } else {
+        toast.error(result.error);
       }
+    });
+  };
 
-      startTransition(async () => {
-        const result = await updateFamilyMember({
-          id: editingMember.id,
-          ...data,
-        });
+  const handleUpdateMember = (
+    data: Omit<CreateFamilyMemberInput, "finalSpaceId">
+  ) => {
+    if (!editingMember) {
+      return;
+    }
 
-        if (result.success) {
-          setMembers((prev) =>
-            prev.map((m) => (m.id === editingMember.id ? result.data : m))
-          );
-          setEditingMember(null);
-          toast.success("Family member updated");
-        } else {
-          toast.error(result.error);
-        }
+    startTransition(async () => {
+      const result = await updateFamilyMember({
+        id: editingMember.id,
+        ...data,
       });
-    },
-    [editingMember]
-  );
 
-  const handleDeleteMember = useCallback(() => {
+      if (result.success) {
+        setMembers((prev) =>
+          prev.map((m) => (m.id === editingMember.id ? result.data : m))
+        );
+        setEditingMember(null);
+        toast.success("Family member updated");
+      } else {
+        toast.error(result.error);
+      }
+    });
+  };
+
+  const handleDeleteMember = () => {
     if (!deletingMemberId) {
       return;
     }
@@ -179,16 +177,16 @@ export function FamilyStep() {
         toast.error(result.error);
       }
     });
-  }, [deletingMemberId]);
+  };
 
-  const handleSelectMember = useCallback((member: FamilyMember) => {
+  const handleSelectMember = (member: FamilyMember) => {
     setEditingMember(member);
-  }, []);
+  };
 
-  const handleAddRelative = useCallback(() => {
+  const handleAddRelative = () => {
     setEditingMember(null);
     setShowForm(true);
-  }, []);
+  };
 
   if (!finalSpaceId) {
     return (

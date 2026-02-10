@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Icon } from "@/components/ui/icon";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import {
@@ -27,6 +27,29 @@ type MediaItem = {
   originalName: string;
 };
 
+async function fetchHeaderCarouselData(finalSpaceId: string): Promise<{
+  albumId: string | null;
+  images: MediaItem[];
+}> {
+  const result = await getOrCreateHeaderCarousel(finalSpaceId);
+
+  if (!(result.success && result.album)) {
+    return { albumId: null, images: [] };
+  }
+
+  const albumMedia = await getAlbumMedia(result.album.id);
+
+  return {
+    albumId: result.album.id,
+    images: albumMedia.map((item) => ({
+      id: item.mediaAsset.id,
+      storageKey: item.mediaAsset.storageKey,
+      title: item.mediaAsset.title,
+      originalName: item.mediaAsset.originalName,
+    })),
+  };
+}
+
 export function HeaderCarouselEditor({
   finalSpaceId,
   className,
@@ -36,59 +59,80 @@ export function HeaderCarouselEditor({
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
-  const loadCarousel = useCallback(async () => {
+  const refreshCarousel = async () => {
     setIsLoading(true);
     try {
-      // Get or create header carousel album
-      const result = await getOrCreateHeaderCarousel(finalSpaceId);
-      if (result.success && result.album) {
-        setAlbumId(result.album.id);
-
-        // Load media in the album
-        const albumMedia = await getAlbumMedia(result.album.id);
-        setImages(
-          albumMedia.map((item) => ({
-            id: item.mediaAsset.id,
-            storageKey: item.mediaAsset.storageKey,
-            title: item.mediaAsset.title,
-            originalName: item.mediaAsset.originalName,
-          }))
-        );
-      }
+      const { albumId: nextAlbumId, images: nextImages } =
+        await fetchHeaderCarouselData(finalSpaceId);
+      setAlbumId(nextAlbumId);
+      setImages(nextImages);
     } catch (error) {
       console.error("Failed to load header carousel:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [finalSpaceId]);
+  };
 
   useEffect(() => {
+    let isCancelled = false;
+
+    const loadCarousel = async () => {
+      setIsLoading(true);
+      try {
+        const { albumId: nextAlbumId, images: nextImages } =
+          await fetchHeaderCarouselData(finalSpaceId);
+
+        if (!isCancelled) {
+          setAlbumId(nextAlbumId);
+          setImages(nextImages);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Failed to load header carousel:", error);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     loadCarousel();
-  }, [loadCarousel]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [finalSpaceId]);
 
   const handleUploadComplete = async (
     files: { id: string; url: string; key: string; name: string }[]
   ) => {
-    if (!albumId) return;
+    if (!albumId) {
+      return;
+    }
 
     // Add each uploaded file to the header carousel album
     for (const file of files) {
       await addMediaToAlbum(albumId, file.id);
     }
-    loadCarousel();
+    refreshCarousel();
   };
 
-  const handleRemove = async (mediaId: string) => {
-    if (!albumId) return;
+  const handleRemove = (mediaId: string) => {
+    if (!albumId) {
+      return;
+    }
 
     startTransition(async () => {
       await removeMediaFromAlbum(albumId, mediaId);
-      loadCarousel();
+      refreshCarousel();
     });
   };
 
-  const handleMoveUp = async (index: number) => {
-    if (!albumId || index === 0) return;
+  const handleMoveUp = (index: number) => {
+    if (!albumId || index === 0) {
+      return;
+    }
 
     const newImages = [...images];
     [newImages[index - 1], newImages[index]] = [
@@ -105,8 +149,10 @@ export function HeaderCarouselEditor({
     });
   };
 
-  const handleMoveDown = async (index: number) => {
-    if (!albumId || index === images.length - 1) return;
+  const handleMoveDown = (index: number) => {
+    if (!albumId || index === images.length - 1) {
+      return;
+    }
 
     const newImages = [...images];
     [newImages[index], newImages[index + 1]] = [

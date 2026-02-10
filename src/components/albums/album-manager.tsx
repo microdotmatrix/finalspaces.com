@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,7 +67,7 @@ export function AlbumManager({
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const loadAlbums = useCallback(async () => {
+  const refreshAlbums = async () => {
     setIsLoading(true);
     try {
       const data = await getAlbums(finalSpaceId);
@@ -77,16 +77,40 @@ export function AlbumManager({
     } finally {
       setIsLoading(false);
     }
-  }, [finalSpaceId]);
+  };
 
   useEffect(() => {
+    let isCancelled = false;
+
+    const loadAlbums = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getAlbums(finalSpaceId);
+        if (!isCancelled) {
+          setAlbums(data);
+        }
+      } catch {
+        if (!isCancelled) {
+          console.error("Failed to load albums");
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     loadAlbums();
-  }, [loadAlbums]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [finalSpaceId]);
 
   const customAlbums = albums.filter((a) => !a.isHeaderCarousel);
   const canCreateAlbum = customAlbums.length < 5;
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     if (!title.trim()) {
       setError("Title is required");
       return;
@@ -104,14 +128,14 @@ export function AlbumManager({
         setTitle("");
         setDescription("");
         setError(null);
-        loadAlbums();
+        refreshAlbums();
       } else {
         setError(result.error || "Failed to create album");
       }
     });
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = () => {
     if (!(editingAlbum && title.trim())) {
       setError("Title is required");
       return;
@@ -128,18 +152,18 @@ export function AlbumManager({
         setTitle("");
         setDescription("");
         setError(null);
-        loadAlbums();
+        refreshAlbums();
       } else {
         setError(result.error || "Failed to update album");
       }
     });
   };
 
-  const handleDelete = async (albumId: string) => {
+  const handleDelete = (albumId: string) => {
     startTransition(async () => {
       const result = await deleteAlbum(albumId);
       if (result.success) {
-        loadAlbums();
+        refreshAlbums();
       }
     });
   };

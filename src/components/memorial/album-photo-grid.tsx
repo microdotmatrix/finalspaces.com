@@ -3,7 +3,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { MediaCommentsPanel } from "@/components/media-comments/media-comments-panel";
 import { features } from "@/lib/config";
@@ -26,27 +26,27 @@ function getMediaUrl(storageKey: string): string {
 export function AlbumPhotoGrid({ photos }: AlbumPhotoGridProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const closeLightbox = useCallback(() => {
+  const closeLightbox = () => {
     setLightboxIndex(null);
-  }, []);
+  };
 
-  const goToPrev = useCallback(() => {
+  const goToPrev = () => {
     setLightboxIndex((prev) => {
       if (prev === null || prev === 0) {
         return prev;
       }
       return prev - 1;
     });
-  }, []);
+  };
 
-  const goToNext = useCallback(() => {
+  const goToNext = () => {
     setLightboxIndex((prev) => {
       if (prev === null || prev >= photos.length - 1) {
         return prev;
       }
       return prev + 1;
     });
-  }, [photos.length]);
+  };
 
   // Keyboard navigation for lightbox
   useEffect(() => {
@@ -56,19 +56,29 @@ export function AlbumPhotoGrid({ photos }: AlbumPhotoGridProps) {
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "ArrowLeft") {
-        goToPrev();
+        setLightboxIndex((prev) => {
+          if (prev === null || prev === 0) {
+            return prev;
+          }
+          return prev - 1;
+        });
       }
       if (e.key === "ArrowRight") {
-        goToNext();
+        setLightboxIndex((prev) => {
+          if (prev === null || prev >= photos.length - 1) {
+            return prev;
+          }
+          return prev + 1;
+        });
       }
       if (e.key === "Escape") {
-        closeLightbox();
+        setLightboxIndex(null);
       }
     }
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [lightboxIndex, goToPrev, goToNext, closeLightbox]);
+  }, [lightboxIndex, photos.length]);
 
   if (photos.length === 0) {
     return (

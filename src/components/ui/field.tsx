@@ -1,7 +1,6 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -179,36 +178,30 @@ function FieldError({
 }: React.ComponentProps<"div"> & {
   errors?: Array<{ message?: string } | undefined>;
 }) {
-  const content = useMemo(() => {
-    if (children) {
-      return children;
-    }
+  let content = children;
 
-    if (!errors?.length) {
-      return null;
-    }
-
+  if (!(children || !errors?.length)) {
     const uniqueErrors = [
       ...new Map(errors.map((error) => [error?.message, error])).values(),
     ];
 
     if (uniqueErrors?.length === 1) {
-      return uniqueErrors[0]?.message;
+      content = uniqueErrors[0]?.message;
+    } else {
+      content = (
+        <ul className="ml-4 flex list-disc flex-col gap-1">
+          {uniqueErrors.map((error) => {
+            const message = error?.message;
+            if (!message) {
+              return null;
+            }
+
+            return <li key={message}>{message}</li>;
+          })}
+        </ul>
+      );
     }
-
-    return (
-      <ul className="ml-4 flex list-disc flex-col gap-1">
-        {uniqueErrors.map((error) => {
-          const message = error?.message;
-          if (!message) {
-            return null;
-          }
-
-          return <li key={message}>{message}</li>;
-        })}
-      </ul>
-    );
-  }, [children, errors]);
+  }
 
   if (!content) {
     return null;

@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "i.ytimg.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "*.ufs.sh",
         pathname: "/f/*",
       },

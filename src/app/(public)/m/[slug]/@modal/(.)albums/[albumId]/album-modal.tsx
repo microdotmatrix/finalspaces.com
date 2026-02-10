@@ -3,7 +3,6 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
 import { AlbumPhotoGrid } from "@/components/memorial/album-photo-grid";
 
 interface Photo {
@@ -21,9 +20,9 @@ interface AlbumModalProps {
 export function AlbumModal({ photos, title }: AlbumModalProps) {
   const router = useRouter();
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     router.back();
-  }, [router]);
+  };
 
   return (
     <Dialog.Root

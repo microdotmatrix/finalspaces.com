@@ -2,7 +2,7 @@
 
 import { useAtom, useAtomValue } from "jotai";
 import Image from "next/image";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { HeaderCarouselEditor } from "@/components/albums/header-carousel-editor";
 import { Button } from "@/components/ui/button";
@@ -37,37 +37,50 @@ export function PhotosStep() {
     useState<UploadedFile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
-  // Load existing profile picture
-  const loadProfilePicture = useCallback(async () => {
-    if (!wizardData.profilePictureId) {
+  useEffect(() => {
+    const profilePictureId = wizardData.profilePictureId;
+
+    if (!profilePictureId) {
       setProfilePictureState(null);
       return;
     }
 
-    setIsLoadingProfile(true);
-    try {
-      const media = await getMediaAsset(wizardData.profilePictureId);
-      if (media) {
-        setProfilePictureState({
-          id: media.id,
-          url: `https://utfs.io/f/${media.storageKey}`,
-          key: media.storageKey,
-          name: media.originalName,
-        });
+    let isCancelled = false;
+
+    const loadProfilePicture = async () => {
+      setIsLoadingProfile(true);
+      try {
+        const media = await getMediaAsset(profilePictureId);
+        if (media && !isCancelled) {
+          setProfilePictureState({
+            id: media.id,
+            url: `https://utfs.io/f/${media.storageKey}`,
+            key: media.storageKey,
+            name: media.originalName,
+          });
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Failed to load profile picture:", error);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingProfile(false);
+        }
       }
-    } catch (error) {
-      console.error("Failed to load profile picture:", error);
-    } finally {
-      setIsLoadingProfile(false);
-    }
+    };
+
+    loadProfilePicture();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [wizardData.profilePictureId]);
 
-  useEffect(() => {
-    loadProfilePicture();
-  }, [loadProfilePicture]);
-
-  const handleProfileUpload = async (files: UploadedFile[]) => {
-    if (!draftId || files.length === 0) return;
+  const handleProfileUpload = (files: UploadedFile[]) => {
+    if (!draftId || files.length === 0) {
+      return;
+    }
 
     const file = files[0];
     setProfilePictureState(file);
@@ -90,8 +103,10 @@ export function PhotosStep() {
     });
   };
 
-  const handleProfileRemove = async () => {
-    if (!(draftId && profilePicture)) return;
+  const handleProfileRemove = () => {
+    if (!(draftId && profilePicture)) {
+      return;
+    }
 
     const mediaId = profilePicture.id;
     setProfilePictureState(null);

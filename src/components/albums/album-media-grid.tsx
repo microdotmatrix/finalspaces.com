@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { ImageUploader } from "@/components/ui/image-uploader";
@@ -56,7 +56,7 @@ export function AlbumMediaGrid({
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [captionValue, setCaptionValue] = useState("");
 
-  const loadMedia = useCallback(async () => {
+  const refreshMedia = async () => {
     setIsLoading(true);
     try {
       const data = await getAlbumMedia(albumId);
@@ -66,26 +66,50 @@ export function AlbumMediaGrid({
     } finally {
       setIsLoading(false);
     }
-  }, [albumId]);
+  };
 
   useEffect(() => {
-    loadMedia();
-  }, [loadMedia]);
+    let isCancelled = false;
 
-  const handleRemove = async (mediaId: string) => {
+    const loadMedia = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getAlbumMedia(albumId);
+        if (!isCancelled) {
+          setMedia(data);
+        }
+      } catch {
+        if (!isCancelled) {
+          console.error("Failed to load album media");
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadMedia();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [albumId]);
+
+  const handleRemove = (mediaId: string) => {
     startTransition(async () => {
       const result = await removeMediaFromAlbum(albumId, mediaId);
       if (result.success) {
-        loadMedia();
+        refreshMedia();
       }
     });
   };
 
-  const handleCaptionSave = async (mediaId: string) => {
+  const handleCaptionSave = (mediaId: string) => {
     startTransition(async () => {
       await updateAlbumMediaCaption(albumId, mediaId, captionValue);
       setEditingCaption(null);
-      loadMedia();
+      refreshMedia();
     });
   };
 
@@ -96,7 +120,7 @@ export function AlbumMediaGrid({
     for (const file of files) {
       await addMediaToAlbum(albumId, file.id);
     }
-    loadMedia();
+    refreshMedia();
   };
 
   // Generate URL from storage key

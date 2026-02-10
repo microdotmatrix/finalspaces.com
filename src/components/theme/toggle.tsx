@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { useMetaColor } from "@/hooks/use-meta-color";
@@ -14,7 +14,7 @@ export const ThemeToggle = ({ iconSize = "size-5" }: { iconSize?: string }) => {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { setMetaColor } = useMetaColor();
 
-  const cycleTheme = useCallback(() => {
+  const cycleTheme = () => {
     const currentIndex = themeOrder.indexOf(
       theme as (typeof themeOrder)[number]
     );
@@ -28,7 +28,7 @@ export const ThemeToggle = ({ iconSize = "size-5" }: { iconSize?: string }) => {
     setMetaColor(
       effectiveTheme === "dark" ? meta.colors.dark : meta.colors.light
     );
-  }, [theme, resolvedTheme, setTheme, setMetaColor]);
+  };
 
   useEffect(() => {
     setMounted(true);

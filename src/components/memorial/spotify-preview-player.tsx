@@ -1,14 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import {
-  type ChangeEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -164,14 +157,14 @@ export function SpotifyPreviewPlayer({
     };
   }, [currentIndex, storageKey, tracks.length]);
 
-  const handlePlayPause = useCallback(() => {
+  const handlePlayPause = () => {
     if (!currentPreview) {
       return;
     }
     setIsPlaying((prev) => !prev);
-  }, [currentPreview]);
+  };
 
-  const handlePrev = useCallback(() => {
+  const handlePrev = () => {
     if (tracks.length === 0) {
       return;
     }
@@ -179,18 +172,18 @@ export function SpotifyPreviewPlayer({
       currentIndex === 0 ? Math.max(tracks.length - 1, 0) : currentIndex - 1;
     setCurrentIndex(nextIndex);
     setPosition(0);
-  }, [currentIndex, tracks.length]);
+  };
 
-  const handleNext = useCallback(() => {
+  const handleNext = () => {
     if (tracks.length === 0) {
       return;
     }
     const nextIndex = (currentIndex + 1) % tracks.length;
     setCurrentIndex(nextIndex);
     setPosition(0);
-  }, [currentIndex, tracks.length]);
+  };
 
-  const handleSeek = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+  const handleSeek = (event: ChangeEvent<HTMLInputElement>) => {
     const audio = audioRef.current;
     if (!audio) {
       return;
@@ -198,21 +191,17 @@ export function SpotifyPreviewPlayer({
     const nextTime = Number(event.target.value);
     audio.currentTime = nextTime;
     setPosition(nextTime);
-  }, []);
+  };
 
-  const header = useMemo(() => {
-    if (!(title || subtitle)) {
-      return null;
-    }
-    return (
+  const header =
+    title || subtitle ? (
       <div className="space-y-1">
         {title && <h3 className="font-semibold text-lg">{title}</h3>}
         {subtitle && (
           <p className="text-muted-foreground text-sm">{subtitle}</p>
         )}
       </div>
-    );
-  }, [subtitle, title]);
+    ) : null;
 
   return (
     <Card className="gap-4 p-4">

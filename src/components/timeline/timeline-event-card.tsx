@@ -3,6 +3,8 @@
 import { Building2, ChevronDown, Clock, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { ImageDialog } from "@/components/elements/image-dialog";
+import { getMemorialMediaUrl } from "@/components/memorial/memorial-header-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import type { TimelineEventWithCategory } from "@/lib/actions/timeline-actions";
 import { cn } from "@/lib/utils";
@@ -22,6 +24,7 @@ export function TimelineEventCard({ event, actions }: TimelineEventCardProps) {
 
   const categoryStyles = getCategoryBadgeStyles(event.category?.color ?? null);
   const dateString = formatEventDateRange(event);
+  const imageUrl = getMemorialMediaUrl(event.storageKey ?? null);
 
   return (
     <div className="relative flex items-start gap-4 pl-4">
@@ -82,28 +85,37 @@ export function TimelineEventCard({ event, actions }: TimelineEventCardProps) {
               )}
             </div>
 
-            <div className="flex shrink-0 items-center gap-1">
-              {actions}
-
-              {/* Expand button */}
-              {hasExpandableContent && (
-                <button
-                  aria-expanded={isExpanded}
-                  aria-label={
-                    isExpanded ? "Collapse details" : "Expand details"
-                  }
-                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  type="button"
-                >
-                  <ChevronDown
-                    className={cn(
-                      "size-5 transition-transform duration-200",
-                      isExpanded && "rotate-180"
-                    )}
-                  />
-                </button>
+            {/* Right side: thumbnail + actions */}
+            <div className="flex shrink-0 items-start gap-2">
+              {imageUrl && (
+                <div className="[&_img]:!h-full [&_img]:!w-full [&_img]:!object-cover size-16 overflow-hidden rounded-md border sm:size-20">
+                  <ImageDialog alt={event.title} src={imageUrl} />
+                </div>
               )}
+
+              <div className="flex items-center gap-1">
+                {actions}
+
+                {/* Expand button */}
+                {hasExpandableContent && (
+                  <button
+                    aria-expanded={isExpanded}
+                    aria-label={
+                      isExpanded ? "Collapse details" : "Expand details"
+                    }
+                    className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    type="button"
+                  >
+                    <ChevronDown
+                      className={cn(
+                        "size-5 transition-transform duration-200",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

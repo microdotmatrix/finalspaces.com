@@ -190,6 +190,47 @@ export const uploadRouter = {
         albumId: metadata.albumId,
       };
     }),
+  /**
+   * Timeline event image - single image, 4MB max
+   */
+  timelineEventImage: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+  })
+    .middleware(async ({ req }) => {
+      const { userId } = await authenticateUser();
+
+      const finalSpaceId = req.headers.get("x-final-space-id");
+      if (!finalSpaceId) {
+        throw new UploadThingError("FinalSpace ID is required");
+      }
+
+      await validateFinalSpaceAccess(userId, finalSpaceId);
+
+      return { userId, finalSpaceId, type: "timeline" as const };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      const [mediaAsset] = await db
+        .insert(mediaAssets)
+        .values({
+          finalSpaceId: metadata.finalSpaceId,
+          type: "image",
+          title: "Timeline Event Photo",
+          originalName: file.name,
+          mime: file.type,
+          size: file.size,
+          storageKey: file.key,
+        })
+        .returning();
+
+      return {
+        mediaId: mediaAsset.id,
+        url: file.ufsUrl,
+        key: file.key,
+      };
+    }),
 } satisfies FileRouter;
 
 export type UploadRouter = typeof uploadRouter;

@@ -1,9 +1,8 @@
 import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
 import { ShieldCheck, Star, UsersThree } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const trustBadges = [
   {
@@ -22,14 +21,12 @@ const trustBadges = [
 
 export const HeroSection = () => {
   return (
-    <section
-      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden"
-    >
+    <section className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden">
       <Image
-        src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080"
         alt="Hero background"
+        className="absolute inset-0 -z-1 object-cover opacity-25 mix-blend-hard-light"
         fill
-        className="object-cover absolute inset-0 -z-1 opacity-25 mix-blend-hard-light"
+        src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080"
       />
       {/* Gradient background placeholder */}
       <div
@@ -54,9 +51,9 @@ export const HeroSection = () => {
         </h1>
 
         <p className="max-w-xl text-balance text-lg text-muted-foreground sm:text-xl">
-          Create meaningful memorial spaces that celebrate life's journey.
-          Share stories, preserve memories, and honor those we love with dignity
-          and warmth.
+          Create meaningful memorial spaces that celebrate life's journey. Share
+          stories, preserve memories, and honor those we love with dignity and
+          warmth.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4">

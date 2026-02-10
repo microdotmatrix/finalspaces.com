@@ -9,6 +9,7 @@ import { features } from "@/lib/config";
 import { db } from "@/lib/db";
 import {
   finalSpaces,
+  mediaAssets,
   timelineCategories,
   timelineEvents,
 } from "@/lib/db/schema";
@@ -45,6 +46,7 @@ export interface TimelineEventWithCategory {
   longitude: number | null;
   addToMap: boolean;
   mediaId: string | null;
+  storageKey: string | null;
   sortOrder: number;
   isPublic: boolean;
   cardSize: "compact" | "standard" | "featured";
@@ -81,6 +83,7 @@ const createTimelineEventSchema = z.object({
   endDay: z.number().min(1).max(31).nullable(),
   endYear: z.number().nullable(),
   location: z.string().max(500).nullable(),
+  mediaId: z.uuid().nullable(),
   isPublic: z.boolean(),
 });
 
@@ -193,6 +196,7 @@ export async function createTimelineEvent(
       latitude,
       longitude,
       addToMap,
+      mediaId: data.mediaId,
       isPublic: data.isPublic,
       sortOrder,
     })
@@ -451,12 +455,16 @@ export async function getPublicTimelineEventsWithCategories(
         color: timelineCategories.color,
         icon: timelineCategories.icon,
       },
+      media: {
+        storageKey: mediaAssets.storageKey,
+      },
     })
     .from(timelineEvents)
     .leftJoin(
       timelineCategories,
       eq(timelineEvents.categoryId, timelineCategories.id)
     )
+    .leftJoin(mediaAssets, eq(timelineEvents.mediaId, mediaAssets.id))
     .where(
       and(
         eq(timelineEvents.finalSpaceId, finalSpaceId),
@@ -472,6 +480,7 @@ export async function getPublicTimelineEventsWithCategories(
   return results.map((row) => ({
     ...row.event,
     category: row.category,
+    storageKey: row.media?.storageKey ?? null,
   }));
 }
 
@@ -493,12 +502,16 @@ export async function getTimelineEventsWithCategories(
         color: timelineCategories.color,
         icon: timelineCategories.icon,
       },
+      media: {
+        storageKey: mediaAssets.storageKey,
+      },
     })
     .from(timelineEvents)
     .leftJoin(
       timelineCategories,
       eq(timelineEvents.categoryId, timelineCategories.id)
     )
+    .leftJoin(mediaAssets, eq(timelineEvents.mediaId, mediaAssets.id))
     .where(eq(timelineEvents.finalSpaceId, finalSpaceId))
     .orderBy(
       desc(timelineEvents.eventYear),
@@ -509,6 +522,7 @@ export async function getTimelineEventsWithCategories(
   return results.map((row) => ({
     ...row.event,
     category: row.category,
+    storageKey: row.media?.storageKey ?? null,
   }));
 }
 

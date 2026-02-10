@@ -19,7 +19,11 @@ type UploadedFile = {
 };
 
 type ImageUploaderProps = {
-  endpoint: "profileImage" | "headerCarousel" | "albumMedia";
+  endpoint:
+    | "profileImage"
+    | "headerCarousel"
+    | "albumMedia"
+    | "timelineEventImage";
   finalSpaceId: string;
   albumId?: string;
   maxFiles?: number;

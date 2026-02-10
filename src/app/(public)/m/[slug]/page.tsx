@@ -167,7 +167,10 @@ export default async function MemorialPage({ params }: Props) {
                 </Card>
               }
             >
-              <TimelineSection finalSpaceId={space.id} />
+              <TimelineSection
+                finalSpaceId={space.id}
+                subjectName={displayName || space.name}
+              />
             </Suspense>
 
             <MemorialPlaces

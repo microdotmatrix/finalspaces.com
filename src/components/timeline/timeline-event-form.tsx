@@ -1,9 +1,11 @@
 "use client";
 
-import { type SubmitEventHandler, useTransition } from "react";
+import Image from "next/image";
+import { type SubmitEventHandler, useState, useTransition } from "react";
 import { toast } from "sonner";
-
+import { getMemorialMediaUrl } from "@/components/memorial/memorial-header-utils";
 import { Button } from "@/components/ui/button";
+import { ImageUploader } from "@/components/ui/image-uploader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,18 +17,17 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-
 import {
   type CreateTimelineEventInput,
   createTimelineEvent,
   type TimelineCategory,
-  type TimelineEvent,
+  type TimelineEventWithCategory,
   updateTimelineEvent,
 } from "@/lib/actions/timeline-actions";
 
 interface TimelineEventFormProps {
   categories: TimelineCategory[];
-  event?: TimelineEvent;
+  event?: TimelineEventWithCategory;
   finalSpaceId: string;
   onSuccess?: () => void;
 }
@@ -72,6 +73,14 @@ export function TimelineEventForm({
     submitLabel = "Save Changes";
   }
 
+  // Track uploaded photo: mediaId for submission, previewUrl for display
+  const [uploadedMediaId, setUploadedMediaId] = useState<string | null>(
+    event?.mediaId ?? null
+  );
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    getMemorialMediaUrl(event?.storageKey ?? null)
+  );
+
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = (formEvent) => {
     formEvent.preventDefault();
     const formData = new FormData(formEvent.currentTarget);
@@ -100,6 +109,7 @@ export function TimelineEventForm({
       endDay: formData.get("endDay") ? Number(formData.get("endDay")) : null,
       endYear: formData.get("endYear") ? Number(formData.get("endYear")) : null,
       location: (formData.get("location") as string) || null,
+      mediaId: uploadedMediaId,
       isPublic: formData.get("isPublic") === "on",
     };
 
@@ -114,6 +124,8 @@ export function TimelineEventForm({
         toast.success(isEditing ? "Event updated" : "Event created");
         if (!isEditing) {
           (formEvent.target as HTMLFormElement).reset();
+          setUploadedMediaId(null);
+          setPreviewUrl(null);
         }
         onSuccess?.();
       } else {
@@ -290,6 +302,59 @@ export function TimelineEventForm({
           name="location"
           placeholder="e.g. Cambridge, MA"
         />
+      </div>
+
+      {/* Event Photo */}
+      <div className="space-y-2">
+        <Label>Event Photo</Label>
+        {previewUrl ? (
+          <div className="relative w-full max-w-xs overflow-hidden rounded-lg border">
+            <Image
+              alt="Event photo"
+              className="aspect-video w-full object-cover"
+              height={200}
+              src={previewUrl}
+              width={320}
+            />
+            <button
+              aria-label="Remove photo"
+              className="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                setUploadedMediaId(null);
+                setPreviewUrl(null);
+              }}
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M6 18L18 6M6 6l12 12"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <ImageUploader
+            endpoint="timelineEventImage"
+            finalSpaceId={finalSpaceId}
+            maxFiles={1}
+            onUploadComplete={(files) => {
+              if (files[0]) {
+                setUploadedMediaId(files[0].id);
+                setPreviewUrl(files[0].url);
+              }
+            }}
+            variant="compact"
+          />
+        )}
       </div>
 
       <div className="flex items-center gap-3">

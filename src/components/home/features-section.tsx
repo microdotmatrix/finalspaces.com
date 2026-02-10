@@ -9,7 +9,7 @@ const features = [
     step: 1,
     title: "Share Your Story",
     description:
-      "Create a meaningful memorial space. Share life&#39;s journey, cherished photos, videos, and the moments that defined a beautiful life.",
+      "Create a meaningful memorial space. Share life's journey, cherished photos, videos, and the moments that defined a beautiful life.",
     icon: UsersThree,
     iconBg:
       "bg-secondary/15 text-secondary dark:bg-secondary/25 dark:text-secondary",

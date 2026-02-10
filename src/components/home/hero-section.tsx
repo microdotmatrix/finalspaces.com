@@ -3,6 +3,7 @@ import { ShieldCheck, Star, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 const trustBadges = [
   {
@@ -21,15 +22,23 @@ const trustBadges = [
 
 export const HeroSection = () => {
   return (
-    <section className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden">
+    <section
+      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden"
+    >
+      <Image
+        src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080"
+        alt="Hero background"
+        fill
+        className="object-cover absolute inset-0 -z-1 opacity-25 mix-blend-hard-light"
+      />
       {/* Gradient background placeholder */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-secondary/10 via-background to-primary/5 dark:from-secondary/5 dark:via-background dark:to-primary/10"
+        className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-secondary/50 via-background to-primary/20 dark:from-secondary/50 dark:via-background dark:to-primary/20"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,var(--color-secondary)/0.12,transparent_70%)] dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,var(--color-secondary)/0.06,transparent_70%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,var(--color-secondary)/0.2,transparent_100%)] dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,var(--color-secondary)/0.6,transparent_10%)]"
       />
       <div
         aria-hidden="true"
@@ -38,14 +47,14 @@ export const HeroSection = () => {
 
       {/* Content */}
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-8 px-6 py-24 text-center">
-        <h1 className="font-(family-name:--font-clash) text-5xl leading-[1.1] tracking-tight sm:text-6xl md:text-7xl">
-          <span className="block text-foreground/80">Remember.</span>
-          <span className="block text-primary">Celebrate.</span>
-          <span className="block text-secondary">Honor.</span>
+        <h1 className="text-5xl leading-[1.1] tracking-tight sm:text-6xl md:text-7xl">
+          <span className="block font-light text-foreground/80">Remember</span>
+          <span className="block font-normal text-primary">Celebrate</span>
+          <span className="block font-light text-secondary">Honor</span>
         </h1>
 
         <p className="max-w-xl text-balance text-lg text-muted-foreground sm:text-xl">
-          Create meaningful memorial spaces that celebrate life&#39;s journey.
+          Create meaningful memorial spaces that celebrate life's journey.
           Share stories, preserve memories, and honor those we love with dignity
           and warmth.
         </p>

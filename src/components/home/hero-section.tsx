@@ -8,11 +8,11 @@ import Image from "next/image";
 const trustBadges = [
   {
     icon: ShieldCheck,
-    label: "Secure &amp; Private",
+    label: "Secure & Private",
   },
   {
     icon: Star,
-    label: "Beautiful Memorials",
+    label: "Create Beautiful Memorials",
   },
   {
     icon: UsersThree,

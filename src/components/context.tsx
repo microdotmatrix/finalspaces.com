@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { extractRouterConfig } from "uploadthing/server";
 import { uploadRouter } from "@/app/api/uploadthing/core";
 import { AuthProvider } from "./auth/provider";
+import { ViewportSize } from "./elements/viewport-size";
 import { ThemeProvider } from "./theme/provider";
 import { Toaster } from "./ui/sonner";
 
@@ -21,6 +22,7 @@ export const AppContext = ({ children }: { children: React.ReactNode }) => {
           <UTSSR />
         </Suspense>
         <Toaster />
+        <ViewportSize />
       </ThemeProvider>
     </AuthProvider>
   );

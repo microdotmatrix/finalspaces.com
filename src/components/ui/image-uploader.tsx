@@ -287,7 +287,7 @@ export function ImageUploader({
                 icon="mdi:cloud-upload-outline"
               />
               <p className="mb-1 font-medium text-sm">
-                Drag and drop images here
+                Drag and drop image here
               </p>
               <p className="mb-3 text-muted-foreground text-xs">
                 or click to browse

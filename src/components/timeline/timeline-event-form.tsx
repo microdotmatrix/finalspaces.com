@@ -1,10 +1,12 @@
 "use client";
 
+import { XIcon } from "lucide-react";
 import Image from "next/image";
 import { type SubmitEventHandler, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { getMemorialMediaUrl } from "@/components/memorial/memorial-header-utils";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,20 +45,63 @@ const EVENT_TYPES = [
   { value: "other", label: "Other" },
 ];
 
-const MONTHS = [
-  { value: "1", label: "January" },
-  { value: "2", label: "February" },
-  { value: "3", label: "March" },
-  { value: "4", label: "April" },
-  { value: "5", label: "May" },
-  { value: "6", label: "June" },
-  { value: "7", label: "July" },
-  { value: "8", label: "August" },
-  { value: "9", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
+const getDateFromParts = ({
+  year,
+  month,
+  day,
+}: {
+  year: number | null | undefined;
+  month: number | null | undefined;
+  day: number | null | undefined;
+}): Date | undefined => {
+  if (!(year && month && day)) {
+    return undefined;
+  }
+
+  const date = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return undefined;
+  }
+
+  return date;
+};
+
+const getDateFormValues = (
+  date: Date | undefined
+): { month: string; day: string; year: string } => {
+  if (!date) {
+    return { month: "", day: "", year: "" };
+  }
+
+  return {
+    month: String(date.getMonth() + 1),
+    day: String(date.getDate()),
+    year: String(date.getFullYear()),
+  };
+};
+
+const getSubmitLabel = ({
+  isPending,
+  isEditing,
+}: {
+  isPending: boolean;
+  isEditing: boolean;
+}): string => {
+  if (isPending) {
+    return isEditing ? "Saving..." : "Adding...";
+  }
+
+  if (isEditing) {
+    return "Save Changes";
+  }
+
+  return "Add Event";
+};
 
 export function TimelineEventForm({
   categories,
@@ -66,12 +111,7 @@ export function TimelineEventForm({
 }: TimelineEventFormProps) {
   const [isPending, startTransition] = useTransition();
   const isEditing = !!event;
-  let submitLabel = "Add Event";
-  if (isPending) {
-    submitLabel = isEditing ? "Saving..." : "Adding...";
-  } else if (isEditing) {
-    submitLabel = "Save Changes";
-  }
+  const submitLabel = getSubmitLabel({ isPending, isEditing });
 
   // Track uploaded photo: mediaId for submission, previewUrl for display
   const [uploadedMediaId, setUploadedMediaId] = useState<string | null>(
@@ -80,6 +120,22 @@ export function TimelineEventForm({
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     getMemorialMediaUrl(event?.storageKey ?? null)
   );
+  const [startDate, setStartDate] = useState<Date | undefined>(() =>
+    getDateFromParts({
+      year: event?.eventYear,
+      month: event?.eventMonth,
+      day: event?.eventDay,
+    })
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(() =>
+    getDateFromParts({
+      year: event?.endYear,
+      month: event?.endMonth,
+      day: event?.endDay,
+    })
+  );
+  const startDateValues = getDateFormValues(startDate);
+  const endDateValues = getDateFormValues(endDate);
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = (formEvent) => {
     formEvent.preventDefault();
@@ -126,6 +182,8 @@ export function TimelineEventForm({
           (formEvent.target as HTMLFormElement).reset();
           setUploadedMediaId(null);
           setPreviewUrl(null);
+          setStartDate(undefined);
+          setEndDate(undefined);
         }
         onSuccess?.();
       } else {
@@ -157,7 +215,7 @@ export function TimelineEventForm({
             name="eventType"
             required
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
@@ -173,7 +231,7 @@ export function TimelineEventForm({
         <div className="space-y-2">
           <Label htmlFor="categoryId">Category</Label>
           <Select defaultValue={event?.categoryId ?? ""} name="categoryId">
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
@@ -212,85 +270,59 @@ export function TimelineEventForm({
         />
       </div>
 
-      {/* Start Date */}
-      <fieldset className="space-y-2">
-        <legend className="font-medium text-sm">Start Date</legend>
-        <div className="grid grid-cols-3 gap-2">
-          <Select
-            defaultValue={event?.eventMonth?.toString() ?? ""}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <fieldset className="space-y-2">
+          <legend className="font-medium text-sm">Start Date</legend>
+          <div className="relative">
+            <DatePicker
+              date={startDate}
+              label="Pick start date"
+              setDate={setStartDate}
+            />
+            {startDate && (
+              <button
+                aria-label="Clear start date"
+                className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+                onClick={() => setStartDate(undefined)}
+                type="button"
+              >
+                <XIcon className="size-4" />
+              </button>
+            )}
+          </div>
+          <input
             name="eventMonth"
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Month" />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((month) => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            defaultValue={event?.eventDay ?? ""}
-            disabled={isPending}
-            max={31}
-            min={1}
-            name="eventDay"
-            placeholder="Day"
-            type="number"
+            type="hidden"
+            value={startDateValues.month}
           />
-          <Input
-            defaultValue={event?.eventYear ?? ""}
-            disabled={isPending}
-            max={new Date().getFullYear() + 10}
-            min={1800}
-            name="eventYear"
-            placeholder="Year"
-            type="number"
-          />
-        </div>
-      </fieldset>
+          <input name="eventDay" type="hidden" value={startDateValues.day} />
+          <input name="eventYear" type="hidden" value={startDateValues.year} />
+        </fieldset>
 
-      {/* End Date */}
-      <fieldset className="space-y-2">
-        <legend className="font-medium text-sm">End Date (optional)</legend>
-        <div className="grid grid-cols-3 gap-2">
-          <Select
-            defaultValue={event?.endMonth?.toString() ?? ""}
-            name="endMonth"
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Month" />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((month) => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            defaultValue={event?.endDay ?? ""}
-            disabled={isPending}
-            max={31}
-            min={1}
-            name="endDay"
-            placeholder="Day"
-            type="number"
-          />
-          <Input
-            defaultValue={event?.endYear ?? ""}
-            disabled={isPending}
-            max={new Date().getFullYear() + 10}
-            min={1800}
-            name="endYear"
-            placeholder="Year"
-            type="number"
-          />
-        </div>
-      </fieldset>
+        <fieldset className="space-y-2">
+          <legend className="font-medium text-sm">End Date (optional)</legend>
+          <div className="relative">
+            <DatePicker
+              date={endDate}
+              label="Pick end date"
+              setDate={setEndDate}
+            />
+            {endDate && (
+              <button
+                aria-label="Clear end date"
+                className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+                onClick={() => setEndDate(undefined)}
+                type="button"
+              >
+                <XIcon className="size-4" />
+              </button>
+            )}
+          </div>
+          <input name="endMonth" type="hidden" value={endDateValues.month} />
+          <input name="endDay" type="hidden" value={endDateValues.day} />
+          <input name="endYear" type="hidden" value={endDateValues.year} />
+        </fieldset>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="location">Location</Label>
@@ -352,7 +384,7 @@ export function TimelineEventForm({
                 setPreviewUrl(files[0].url);
               }
             }}
-            variant="compact"
+            variant="default"
           />
         )}
       </div>

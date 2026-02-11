@@ -233,7 +233,7 @@ export function TimelineStep() {
               </Button>
             }
           />
-          <SheetContent className="overflow-y-auto sm:max-w-lg">
+          <SheetContent className="overflow-y-auto sm:data-[side=right]:max-w-lg">
             <SheetHeader>
               <SheetTitle>
                 {selectedEvent ? "Edit Timeline Event" : "Add Timeline Event"}

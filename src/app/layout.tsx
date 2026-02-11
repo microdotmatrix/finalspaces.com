@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AppContext } from "@/components/context";
+import { SiteFooter } from "@/components/home/site-footer";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { meta } from "@/lib/config";
 import {
@@ -78,6 +79,7 @@ export default function RootLayout({
               <ThemeSwitcher />
             </div>
             {children}
+            <SiteFooter />
           </div>
         </AppContext>
       </body>

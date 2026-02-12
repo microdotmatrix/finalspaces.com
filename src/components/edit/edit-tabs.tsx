@@ -1,8 +1,8 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef } from "react";
 
 import { Icon } from "@/components/ui/icon";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,6 +57,16 @@ const EDIT_TABS = [
 ] as const;
 
 type TabKey = (typeof EDIT_TABS)[number]["key"];
+
+const TAB_TRANSITION_EASE = [0.22, 1, 0.36, 1] as const;
+const TAB_PANEL_OFFSET_PX = 20;
+const MOBILE_LABEL_BUFFER_CH = 2;
+
+const isTabKey = (value: string): value is TabKey =>
+  EDIT_TABS.some((tab) => tab.key === value);
+
+const getTabIndex = (tab: TabKey): number =>
+  EDIT_TABS.findIndex((candidate) => candidate.key === tab);
 
 function TabSkeleton() {
   return (
@@ -147,10 +157,20 @@ function FavoritesContent() {
 function EditTabsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentTab = (searchParams.get("tab") || "basic") as TabKey;
+  const shouldReduceMotion = useReducedMotion();
+  const requestedTab = searchParams.get("tab");
+  const currentTab: TabKey =
+    requestedTab && isTabKey(requestedTab) ? requestedTab : "basic";
+  const currentTabIndex = getTabIndex(currentTab);
+  const previousTabIndexRef = useRef<number>(currentTabIndex);
+  const direction = currentTabIndex >= previousTabIndexRef.current ? 1 : -1;
+
+  useEffect(() => {
+    previousTabIndexRef.current = currentTabIndex;
+  }, [currentTabIndex]);
 
   const handleTabChange = (value: string | number | null) => {
-    if (value && typeof value === "string") {
+    if (typeof value === "string" && isTabKey(value)) {
       router.push(`?tab=${value}`, { scroll: false });
     }
   };
@@ -160,6 +180,7 @@ function EditTabsContent() {
       <TabsList className="mb-6 w-full justify-start" variant="line">
         {EDIT_TABS.map((tab) => {
           const isActive = currentTab === tab.key;
+          const mobileLabelWidth = `${tab.label.length + MOBILE_LABEL_BUFFER_CH}ch`;
           return (
             <TabsTrigger
               className="after:hidden! cursor-pointer"
@@ -169,11 +190,15 @@ function EditTabsContent() {
               <Icon className="size-4" icon={tab.icon} />
               <motion.span
                 animate={{
-                  width: isActive ? "auto" : 0,
+                  maxWidth: isActive ? mobileLabelWidth : "0ch",
                   opacity: isActive ? 1 : 0,
                 }}
-                className="overflow-hidden whitespace-nowrap sm:hidden"
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                className="inline-block overflow-hidden whitespace-nowrap sm:hidden"
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { duration: 0.25, ease: TAB_TRANSITION_EASE }
+                }
               >
                 {tab.label}
               </motion.span>
@@ -182,11 +207,15 @@ function EditTabsContent() {
                 <motion.div
                   className="absolute inset-x-0 bottom-[-5px] h-0.5 bg-foreground"
                   layoutId="active-tab-indicator"
-                  transition={{
-                    type: "spring",
-                    stiffness: 500,
-                    damping: 30,
-                  }}
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0 }
+                      : {
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                        }
+                  }
                 />
               ) : null}
             </TabsTrigger>
@@ -194,16 +223,26 @@ function EditTabsContent() {
         })}
       </TabsList>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="sync">
         <motion.div
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          initial={{ opacity: 0, x: 20 }}
-          key={currentTab}
-          transition={{
-            duration: 0.3,
-            ease: [0.22, 1, 0.36, 1],
+          exit={{
+            opacity: shouldReduceMotion ? 1 : 0,
+            x: shouldReduceMotion ? 0 : direction * -TAB_PANEL_OFFSET_PX,
           }}
+          initial={{
+            opacity: shouldReduceMotion ? 1 : 0,
+            x: shouldReduceMotion ? 0 : direction * TAB_PANEL_OFFSET_PX,
+          }}
+          key={currentTab}
+          transition={
+            shouldReduceMotion
+              ? { duration: 0 }
+              : {
+                  duration: 0.3,
+                  ease: TAB_TRANSITION_EASE,
+                }
+          }
         >
           {currentTab === "basic" && <BasicInfoContent />}
           {currentTab === "media" && <MediaContent />}

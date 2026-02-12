@@ -176,8 +176,8 @@ export function PhotosStep() {
           {isLoadingProfile ? (
             <div className="size-32 animate-pulse rounded-full bg-muted" />
           ) : profilePicture ? (
-            <div className="flex items-start gap-4">
-              <div className="relative size-32 overflow-hidden rounded-full border-4 border-background bg-muted shadow-lg">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="relative size-64 overflow-hidden rounded-full border-4 border-border bg-muted shadow-lg">
                 <Image
                   alt="Profile"
                   className="object-cover"
@@ -200,7 +200,7 @@ export function PhotosStep() {
             </div>
           ) : (
             <ImageUploader
-              className="inline-block"
+              className="inline-flex items-center justify-center"
               endpoint="profileImage"
               finalSpaceId={draftId}
               maxFiles={1}

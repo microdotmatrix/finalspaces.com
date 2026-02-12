@@ -151,6 +151,7 @@ export function getEventTypeLabel(eventType: string): string {
     birth: "Birth",
     milestone: "Milestone",
     achievement: "Achievement",
+    celebration: "Celebration",
     family: "Family",
     career: "Career",
     travel: "Travel",

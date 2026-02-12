@@ -43,6 +43,7 @@ export const timelineEventTypeEnum = pgEnum("timeline_event_type", [
   "birth",
   "milestone",
   "achievement",
+  "celebration",
   "family",
   "career",
   "travel",

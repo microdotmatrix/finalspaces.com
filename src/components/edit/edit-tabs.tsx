@@ -158,13 +158,40 @@ function EditTabsContent() {
   return (
     <Tabs onValueChange={handleTabChange} value={currentTab}>
       <TabsList className="mb-6 w-full justify-start" variant="line">
-        {EDIT_TABS.map((tab) => (
-          <TabsTrigger key={tab.key} value={tab.key}>
-            <Icon className="size-4" icon={tab.icon} />
-            <span className="hidden sm:inline">{tab.label}</span>
-            <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
-          </TabsTrigger>
-        ))}
+        {EDIT_TABS.map((tab) => {
+          const isActive = currentTab === tab.key;
+          return (
+            <TabsTrigger
+              className="after:hidden! cursor-pointer"
+              key={tab.key}
+              value={tab.key}
+            >
+              <Icon className="size-4" icon={tab.icon} />
+              <motion.span
+                animate={{
+                  width: isActive ? "auto" : 0,
+                  opacity: isActive ? 1 : 0,
+                }}
+                className="overflow-hidden whitespace-nowrap sm:hidden"
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {tab.label}
+              </motion.span>
+              <span className="hidden sm:inline">{tab.label}</span>
+              {isActive ? (
+                <motion.div
+                  className="absolute inset-x-0 bottom-[-5px] h-0.5 bg-foreground"
+                  layoutId="active-tab-indicator"
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 30,
+                  }}
+                />
+              ) : null}
+            </TabsTrigger>
+          );
+        })}
       </TabsList>
 
       <AnimatePresence mode="wait">

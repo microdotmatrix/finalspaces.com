@@ -41,59 +41,60 @@ export function TimelineEventCard({ event, actions }: TimelineEventCardProps) {
       <Card className="flex-1 transition-shadow hover:shadow-md">
         <CardContent>
           {/* Header row */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 space-y-1">
-              {/* Title and badge */}
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-semibold">{event.title}</h3>
-                {event.category && (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium text-xs"
-                    style={{
-                      backgroundColor: categoryStyles.backgroundColor,
-                      borderColor: categoryStyles.borderColor,
-                      color: categoryStyles.color,
-                    }}
-                  >
-                    {event.category.name}
-                  </span>
+          <div className="flex items-start gap-3 sm:gap-6">
+            {/* Left side: thumbnail */}
+            {imageUrl && (
+              <div className="[&_img]:!h-full [&_img]:!w-full [&_img]:!object-cover size-16 shrink-0 overflow-hidden rounded-md border sm:size-24">
+                <ImageDialog alt={event.title} src={imageUrl} />
+              </div>
+            )}
+
+            <div className="flex flex-1 items-start justify-between gap-3">
+              <div className="flex-1 space-y-1">
+                {/* Title and badge */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-semibold">{event.title}</h3>
+                  {event.category && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium text-xs"
+                      style={{
+                        backgroundColor: categoryStyles.backgroundColor,
+                        borderColor: categoryStyles.borderColor,
+                        color: categoryStyles.color,
+                      }}
+                    >
+                      {event.category.name}
+                    </span>
+                  )}
+                </div>
+
+                {/* Date */}
+                {dateString && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+                    <Clock className="size-3.5" />
+                    <span>{dateString}</span>
+                  </div>
+                )}
+
+                {/* Organization */}
+                {event.organization && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+                    <Building2 className="size-3.5" />
+                    <span>{event.organization}</span>
+                  </div>
+                )}
+
+                {/* Location */}
+                {event.location && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+                    <MapPin className="size-3.5" />
+                    <span>{event.location}</span>
+                  </div>
                 )}
               </div>
 
-              {/* Date */}
-              {dateString && (
-                <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                  <Clock className="size-3.5" />
-                  <span>{dateString}</span>
-                </div>
-              )}
-
-              {/* Organization */}
-              {event.organization && (
-                <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                  <Building2 className="size-3.5" />
-                  <span>{event.organization}</span>
-                </div>
-              )}
-
-              {/* Location */}
-              {event.location && (
-                <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                  <MapPin className="size-3.5" />
-                  <span>{event.location}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Right side: thumbnail + actions */}
-            <div className="flex shrink-0 items-start gap-2">
-              {imageUrl && (
-                <div className="[&_img]:!h-full [&_img]:!w-full [&_img]:!object-cover size-16 overflow-hidden rounded-md border sm:size-20">
-                  <ImageDialog alt={event.title} src={imageUrl} />
-                </div>
-              )}
-
-              <div className="flex items-center gap-1">
+              {/* Right side: actions */}
+              <div className="flex shrink-0 items-center gap-1">
                 {actions}
 
                 {/* Expand button */}

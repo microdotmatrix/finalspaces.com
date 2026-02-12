@@ -30,6 +30,7 @@ export interface TimelineEventWithCategory {
     | "birth"
     | "milestone"
     | "achievement"
+    | "celebration"
     | "family"
     | "career"
     | "travel"
@@ -70,6 +71,7 @@ const createTimelineEventSchema = z.object({
     "birth",
     "milestone",
     "achievement",
+    "celebration",
     "family",
     "career",
     "travel",

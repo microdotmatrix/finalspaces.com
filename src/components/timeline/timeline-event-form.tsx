@@ -35,12 +35,9 @@ interface TimelineEventFormProps {
 }
 
 const EVENT_TYPES = [
-  { value: "birth", label: "Birth" },
   { value: "milestone", label: "Milestone" },
   { value: "achievement", label: "Achievement" },
-  { value: "family", label: "Family" },
-  { value: "career", label: "Career" },
-  { value: "travel", label: "Travel" },
+  { value: "celebration", label: "Celebration" },
   { value: "memory", label: "Memory" },
   { value: "other", label: "Other" },
 ];
@@ -112,6 +109,9 @@ export function TimelineEventForm({
   const [isPending, startTransition] = useTransition();
   const isEditing = !!event;
   const submitLabel = getSubmitLabel({ isPending, isEditing });
+  const categoryOptions = categories.filter(
+    (category) => category.key !== "accomplishments"
+  );
 
   // Track uploaded photo: mediaId for submission, previewUrl for display
   const [uploadedMediaId, setUploadedMediaId] = useState<string | null>(
@@ -235,7 +235,7 @@ export function TimelineEventForm({
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((category) => (
+              {categoryOptions.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
                 </SelectItem>

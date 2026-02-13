@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { ActionButton } from "@/components/elements/action-button";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { ImageUploader } from "@/components/ui/image-uploader";
@@ -14,7 +16,7 @@ import {
 } from "@/lib/actions/media-actions";
 import { cn } from "@/lib/utils";
 
-type AlbumMediaItem = {
+interface AlbumMediaItem {
   albumMedia: {
     albumId: string;
     mediaId: string;
@@ -35,14 +37,14 @@ type AlbumMediaItem = {
     height: number | null;
     createdAt: Date | null;
   };
-};
+}
 
-type AlbumMediaGridProps = {
+interface AlbumMediaGridProps {
   albumId: string;
   finalSpaceId: string;
   onSetCover?: (mediaId: string) => void;
   className?: string;
-};
+}
 
 export function AlbumMediaGrid({
   albumId,
@@ -96,13 +98,20 @@ export function AlbumMediaGrid({
     };
   }, [albumId]);
 
-  const handleRemove = (mediaId: string) => {
-    startTransition(async () => {
-      const result = await removeMediaFromAlbum(albumId, mediaId);
-      if (result.success) {
-        refreshMedia();
-      }
-    });
+  const handleRemove = async (
+    mediaId: string
+  ): Promise<{ error: boolean; message?: string }> => {
+    const result = await removeMediaFromAlbum(albumId, mediaId);
+    if (!result.success) {
+      return {
+        error: true,
+        message: result.error ?? "Failed to remove photo from album",
+      };
+    }
+
+    await refreshMedia();
+    toast.success("Photo removed from album");
+    return { error: false };
   };
 
   const handleCaptionSave = (mediaId: string) => {
@@ -171,28 +180,45 @@ export function AlbumMediaGrid({
               />
 
               {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+              <div
+                className={cn(
+                  "absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100",
+                  editingCaption === item.mediaAsset.id && "opacity-100"
+                )}
+              >
                 {/* Top Actions */}
-                <div className="absolute top-2 right-2 flex gap-1">
-                  {onSetCover && (
-                    <button
-                      className="rounded-full bg-white/90 p-1.5 text-black hover:bg-white"
+                {onSetCover && (
+                  <div className="absolute top-2 left-2">
+                    <Button
+                      aria-label="Set as cover"
+                      className="bg-white/90 text-black hover:bg-white"
                       onClick={() => onSetCover(item.mediaAsset.id)}
+                      size="icon-xs"
                       title="Set as cover"
                       type="button"
+                      variant="secondary"
                     >
                       <Icon className="size-4" icon="mdi:image-check" />
-                    </button>
-                  )}
-                  <button
-                    className="rounded-full bg-destructive p-1.5 text-destructive-foreground hover:bg-destructive/90"
+                    </Button>
+                  </div>
+                )}
+
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <ActionButton
+                    action={() => handleRemove(item.mediaAsset.id)}
+                    areYouSureDescription={
+                      "Remove this image from your album? This cannot be undone."
+                    }
+                    aria-label="Remove from album"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     disabled={isPending}
-                    onClick={() => handleRemove(item.mediaAsset.id)}
+                    requireAreYouSure
+                    size="icon-xs"
                     title="Remove from album"
                     type="button"
                   >
                     <Icon className="size-4" icon="mdi:close" />
-                  </button>
+                  </ActionButton>
                 </div>
 
                 {/* Bottom Caption */}
@@ -201,7 +227,7 @@ export function AlbumMediaGrid({
                     <div className="flex gap-1">
                       <Input
                         autoFocus
-                        className="h-8 bg-white/90 text-black text-xs"
+                        className="h-8 border-border/25 bg-background/50 text-foreground text-xs backdrop-blur-sm"
                         onChange={(e) => setCaptionValue(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {

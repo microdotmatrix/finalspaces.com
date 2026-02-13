@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,12 +30,15 @@ import {
   updateAlbum,
 } from "@/lib/actions/media-actions";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { useEffect, useState, useTransition } from "react";
 
 interface Album {
   id: string;
   title: string;
   description: string | null;
   coverImageId: string | null;
+  coverImageStorageKey: string | null;
   isHeaderCarousel: boolean;
   sortOrder: number;
   createdAt: Date | null;
@@ -56,6 +57,10 @@ export function AlbumManager({
   selectedAlbumId,
   className,
 }: AlbumManagerProps) {
+  const getMediaUrl = (storageKey: string): string => {
+    return `https://utfs.io/f/${storageKey}`;
+  };
+
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -193,7 +198,7 @@ export function AlbumManager({
           {customAlbums.map((album) => (
             <div
               className={cn(
-                "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors",
+                "flex cursor-pointer items-center gap-3 rounded-lg border border-border/50 p-3 transition-colors",
                 selectedAlbumId === album.id
                   ? "border-primary bg-primary/5"
                   : "hover:border-muted-foreground/50"
@@ -203,12 +208,12 @@ export function AlbumManager({
             >
               {/* Cover Image */}
               <div className="size-14 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                {album.coverImageId ? (
+                {album.coverImageStorageKey ? (
                   <Image
                     alt={album.title}
                     className="size-full object-cover"
                     height={56}
-                    src={`/api/media/${album.coverImageId}`}
+                    src={getMediaUrl(album.coverImageStorageKey)}
                     width={56}
                   />
                 ) : (
@@ -311,7 +316,7 @@ export function AlbumManager({
             <span className="ml-2 text-muted-foreground text-xs">(max 5)</span>
           )}
         </DialogTrigger>
-        <DialogContent className="shadow-black/80 shadow-xl sm:max-w-xl">
+        <DialogContent className="shadow-xl sm:max-w-xl border border-border/50">
           <DialogHeader>
             <DialogTitle>Create Album</DialogTitle>
           </DialogHeader>
@@ -356,7 +361,7 @@ export function AlbumManager({
         onOpenChange={(open) => !open && setEditingAlbum(null)}
         open={!!editingAlbum}
       >
-        <DialogContent>
+        <DialogContent className="shadow-xl sm:max-w-xl border border-border/50">
           <DialogHeader>
             <DialogTitle>Edit Album</DialogTitle>
           </DialogHeader>

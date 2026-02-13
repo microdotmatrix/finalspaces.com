@@ -1,16 +1,40 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { AlbumManager } from "@/components/albums/album-manager";
 import { AlbumMediaGrid } from "@/components/albums/album-media-grid";
 import { Icon } from "@/components/ui/icon";
+import { updateAlbum } from "@/lib/actions/media-actions";
 import { draftIdAtom } from "@/lib/stores/wizard-state";
 
 export function AlbumsStep() {
   const draftId = useAtomValue(draftIdAtom);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+  const [albumsVersion, setAlbumsVersion] = useState(0);
+  const [isPending, startTransition] = useTransition();
+
+  const handleSetCover = (mediaId: string) => {
+    if (!selectedAlbumId || isPending) {
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await updateAlbum(selectedAlbumId, {
+        coverImageId: mediaId,
+      });
+
+      if (!result.success) {
+        toast.error(result.error ?? "Failed to set album cover");
+        return;
+      }
+
+      toast.success("Album cover image updated");
+      setAlbumsVersion((current) => current + 1);
+    });
+  };
 
   if (!draftId) {
     return (
@@ -51,6 +75,7 @@ export function AlbumsStep() {
           <h3 className="font-semibold text-lg">Your Albums</h3>
           <AlbumManager
             finalSpaceId={draftId}
+            key={albumsVersion}
             onAlbumSelect={(id) => setSelectedAlbumId(id)}
             selectedAlbumId={selectedAlbumId ?? undefined}
           />
@@ -64,6 +89,7 @@ export function AlbumsStep() {
               <AlbumMediaGrid
                 albumId={selectedAlbumId}
                 finalSpaceId={draftId}
+                onSetCover={handleSetCover}
               />
             </>
           ) : (

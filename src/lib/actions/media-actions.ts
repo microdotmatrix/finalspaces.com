@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { canEditFinalSpace, requireUser } from "@/lib/auth";
@@ -313,7 +313,34 @@ export async function getAlbums(finalSpaceId: string) {
     .where(eq(mediaAlbums.finalSpaceId, finalSpaceId))
     .orderBy(asc(mediaAlbums.sortOrder));
 
-  return albums;
+  const coverImageIds = albums
+    .map((album) => album.coverImageId)
+    .filter((coverImageId): coverImageId is string => Boolean(coverImageId));
+
+  const coverImageById = new Map<string, string>();
+
+  if (coverImageIds.length > 0) {
+    const coverImages = await db
+      .select({ id: mediaAssets.id, storageKey: mediaAssets.storageKey })
+      .from(mediaAssets)
+      .where(
+        and(
+          eq(mediaAssets.finalSpaceId, finalSpaceId),
+          inArray(mediaAssets.id, coverImageIds)
+        )
+      );
+
+    for (const coverImage of coverImages) {
+      coverImageById.set(coverImage.id, coverImage.storageKey);
+    }
+  }
+
+  return albums.map((album) => ({
+    ...album,
+    coverImageStorageKey: album.coverImageId
+      ? (coverImageById.get(album.coverImageId) ?? null)
+      : null,
+  }));
 }
 
 /**

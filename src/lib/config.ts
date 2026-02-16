@@ -3,18 +3,11 @@ export const meta = {
     light: "#ffffff",
     dark: "#09090b",
   },
-  title: "Next.js 16 Starter",
-  description: "Next.js 16 Starter",
-  keywords: [
-    "Next.js",
-    "MicrodotMatrix",
-    "React",
-    "TypeScript",
-    "Tailwind CSS",
-    "Next.js 16",
-  ],
+  title: "Final Spaces",
+  description: "Final Spaces",
+  keywords: ["Final Spaces"],
   author: "MicrodotMatrix",
-  url: "https://next16-starter.vercel.app",
+  url: "https://finalspaces.com",
 };
 
 export const MOBILE_BREAKPOINT = 768;
